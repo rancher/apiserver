@@ -20,17 +20,20 @@ type WatchSession struct {
 	cancel   func()
 }
 
-func (s *WatchSession) stop(id string, resp chan<- types.APIEvent) {
+func (s *WatchSession) stop(sub Subscribe, resp chan<- types.APIEvent) {
 	s.Lock()
 	defer s.Unlock()
-	if cancel, ok := s.watchers[id]; ok {
+	if cancel, ok := s.watchers[sub.key()]; ok {
 		cancel()
 		resp <- types.APIEvent{
 			Name:         "resource.stop",
-			ResourceType: id,
+			ResourceType: sub.ResourceType,
+			Namespace:    sub.Namespace,
+			ID:           sub.ID,
+			Selector:     sub.Selector,
 		}
 	}
-	delete(s.watchers, id)
+	delete(s.watchers, sub.key())
 }
 
 func (s *WatchSession) add(sub Subscribe, resp chan<- types.APIEvent) {
@@ -43,7 +46,7 @@ func (s *WatchSession) add(sub Subscribe, resp chan<- types.APIEvent) {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		defer s.stop(sub.key(), resp)
+		defer s.stop(sub, resp)
 
 		if err := s.stream(ctx, sub, resp); err != nil {
 			sendErr(resp, err, sub)
@@ -139,7 +142,7 @@ func (s *WatchSession) watch(conn *websocket.Conn, resp chan types.APIEvent) err
 		}
 
 		if sub.Stop {
-			s.stop(sub.key(), resp)
+			s.stop(sub, resp)
 		} else {
 			s.Lock()
 			_, ok := s.watchers[sub.key()]
@@ -154,6 +157,7 @@ func (s *WatchSession) watch(conn *websocket.Conn, resp chan types.APIEvent) err
 func sendErr(resp chan<- types.APIEvent, err error, sub Subscribe) {
 	resp <- types.APIEvent{
 		ResourceType: sub.ResourceType,
+		Namespace:    sub.Namespace,
 		ID:           sub.ID,
 		Selector:     sub.Selector,
 		Error:        err,
