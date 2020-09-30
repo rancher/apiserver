@@ -88,9 +88,13 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 		<-s.apiOp.Context().Done()
 	} else {
 		for event := range c {
-			event.ID = sub.ID
-			event.Selector = sub.Selector
-			result <- event
+			if event.Error == nil {
+				event.ID = sub.ID
+				event.Selector = sub.Selector
+				result <- event
+			} else {
+				sendErr(result, event.Error, sub)
+			}
 		}
 	}
 
