@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/rancher/apiserver/pkg/builtin"
 	"github.com/rancher/apiserver/pkg/handlers"
@@ -57,7 +58,7 @@ func DefaultAPIServer() *Server {
 		URLParser:     parse.MuxURLParser,
 	}
 
-	subscribe.Register(s.Schemas, subscribe.DefaultGetter)
+	subscribe.Register(s.Schemas, subscribe.DefaultGetter, os.Getenv("SERVER_VERSION"))
 	return s
 }
 

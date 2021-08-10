@@ -28,21 +28,21 @@ func (s *Subscribe) key() string {
 	return s.ResourceType + "/" + s.Namespace + "/" + s.ID + "/" + s.Selector
 }
 
-func NewHandler(getter SchemasGetter) types.RequestListHandler {
+func NewHandler(getter SchemasGetter, serverVersion string) types.RequestListHandler {
 	return func(apiOp *types.APIRequest) (types.APIObjectList, error) {
-		return Handler(apiOp, getter)
+		return Handler(apiOp, getter, serverVersion)
 	}
 }
 
-func Handler(apiOp *types.APIRequest, getter SchemasGetter) (types.APIObjectList, error) {
-	err := handler(apiOp, getter)
+func Handler(apiOp *types.APIRequest, getter SchemasGetter, serverVersion string) (types.APIObjectList, error) {
+	err := handler(apiOp, getter, serverVersion)
 	if err != nil {
 		logrus.Errorf("Error during subscribe %v", err)
 	}
 	return types.APIObjectList{}, validation.ErrComplete
 }
 
-func handler(apiOp *types.APIRequest, getter SchemasGetter) error {
+func handler(apiOp *types.APIRequest, getter SchemasGetter, serverVersion string) error {
 	c, err := upgrader.Upgrade(apiOp.Response, apiOp.Request, nil)
 	if err != nil {
 		return err
@@ -66,7 +66,12 @@ func handler(apiOp *types.APIRequest, getter SchemasGetter) error {
 				return err
 			}
 		case <-t.C:
-			if err := writeData(apiOp, getter, c, types.APIEvent{Name: "ping"}); err != nil {
+			if err := writeData(apiOp, getter, c, types.APIEvent{
+				Name: "ping",
+				Object: types.APIObject{
+					Object: map[string]interface{}{"version": serverVersion},
+				},
+			}); err != nil {
 				return err
 			}
 		}
