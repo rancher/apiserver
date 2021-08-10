@@ -13,11 +13,13 @@ type Converter struct {
 	obj   interface{}
 }
 
-func MarshallObject(apiOp *types.APIRequest, event types.APIEvent) types.APIEvent {
+func MarshallObject(apiOp *types.APIRequest, getter SchemasGetter, event types.APIEvent) types.APIEvent {
 	if event.Error != nil {
 		return event
 	}
 
+	apiOp = apiOp.Clone()
+	apiOp.Schemas = getter(apiOp)
 	data, err := newConverter(apiOp).ToAPIObject(event.Object)
 	if err != nil {
 		event.Error = err

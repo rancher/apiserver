@@ -28,22 +28,28 @@ func (s *Subscribe) key() string {
 	return s.ResourceType + "/" + s.Namespace + "/" + s.ID + "/" + s.Selector
 }
 
-func Handler(apiOp *types.APIRequest) (types.APIObjectList, error) {
-	err := handler(apiOp)
+func NewHandler(getter SchemasGetter) types.RequestListHandler {
+	return func(apiOp *types.APIRequest) (types.APIObjectList, error) {
+		return Handler(apiOp, getter)
+	}
+}
+
+func Handler(apiOp *types.APIRequest, getter SchemasGetter) (types.APIObjectList, error) {
+	err := handler(apiOp, getter)
 	if err != nil {
 		logrus.Errorf("Error during subscribe %v", err)
 	}
 	return types.APIObjectList{}, validation.ErrComplete
 }
 
-func handler(apiOp *types.APIRequest) error {
+func handler(apiOp *types.APIRequest, getter SchemasGetter) error {
 	c, err := upgrader.Upgrade(apiOp.Response, apiOp.Request, nil)
 	if err != nil {
 		return err
 	}
 	defer c.Close()
 
-	watches := NewWatchSession(apiOp)
+	watches := NewWatchSession(apiOp, getter)
 	defer watches.Close()
 
 	events := watches.Watch(c)
@@ -56,19 +62,19 @@ func handler(apiOp *types.APIRequest) error {
 			if !ok {
 				return nil
 			}
-			if err := writeData(apiOp, c, event); err != nil {
+			if err := writeData(apiOp, getter, c, event); err != nil {
 				return err
 			}
 		case <-t.C:
-			if err := writeData(apiOp, c, types.APIEvent{Name: "ping"}); err != nil {
+			if err := writeData(apiOp, getter, c, types.APIEvent{Name: "ping"}); err != nil {
 				return err
 			}
 		}
 	}
 }
 
-func writeData(apiOp *types.APIRequest, c *websocket.Conn, event types.APIEvent) error {
-	event = MarshallObject(apiOp, event)
+func writeData(apiOp *types.APIRequest, getter SchemasGetter, c *websocket.Conn, event types.APIEvent) error {
+	event = MarshallObject(apiOp, getter, event)
 	if event.Error != nil {
 		event.Name = "resource.error"
 		event.Data = map[string]interface{}{

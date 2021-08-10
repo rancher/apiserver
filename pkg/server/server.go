@@ -57,7 +57,7 @@ func DefaultAPIServer() *Server {
 		URLParser:     parse.MuxURLParser,
 	}
 
-	subscribe.Register(s.Schemas)
+	subscribe.Register(s.Schemas, subscribe.DefaultGetter)
 	return s
 }
 
