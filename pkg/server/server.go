@@ -145,13 +145,13 @@ func (s *Server) handleOp(apiOp *types.APIRequest) (int, interface{}, error) {
 		return 0, nil, err
 	}
 
+	if apiOp.Schema == nil {
+		return http.StatusNotFound, nil, nil
+	}
+
 	action, err := ValidateAction(apiOp)
 	if err != nil {
 		return 0, nil, err
-	}
-
-	if apiOp.Schema == nil {
-		return http.StatusNotFound, nil, nil
 	}
 
 	if action != nil {
