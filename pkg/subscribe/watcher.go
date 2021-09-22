@@ -94,7 +94,17 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 			if event.Error == nil {
 				event.ID = sub.ID
 				event.Selector = sub.Selector
-				result <- event
+				select {
+				case result <- event:
+				default:
+					// handle slow consumer
+					go func() {
+						for range c {
+							// continue to drain until close
+						}
+					}()
+					return nil
+				}
 			} else {
 				sendErr(result, event.Error, sub)
 			}
