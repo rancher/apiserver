@@ -49,6 +49,13 @@ func handler(apiOp *types.APIRequest) error {
 	events := watches.Watch(c)
 	t := time.NewTicker(30 * time.Second)
 	defer t.Stop()
+	defer func() {
+		// Ensure that events gets fully consumed
+		go func() {
+			for range events {
+			}
+		}()
+	}()
 
 	for {
 		select {
