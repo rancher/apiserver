@@ -38,6 +38,12 @@ func DefaultAPIServer() *Server {
 					Encoder:     types.JSONEncoder,
 				},
 			},
+			"jsonl": &writer.GzipWriter{
+				ResponseWriter: &writer.EncodingResponseWriter{
+					ContentType: "application/jsonl",
+					Encoder:     types.JSONLinesEncoder,
+				},
+			},
 			"html": &writer.GzipWriter{
 				ResponseWriter: &writer.HTMLResponseWriter{
 					EncodingResponseWriter: writer.EncodingResponseWriter{
