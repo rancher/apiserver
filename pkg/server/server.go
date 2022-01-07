@@ -173,21 +173,21 @@ func (s *Server) handleOp(apiOp *types.APIRequest) (int, interface{}, error) {
 	switch apiOp.Method {
 	case http.MethodGet:
 		if apiOp.Name == "" {
-			data, err := handleList(apiOp, apiOp.Schema.ListHandler, handlers.ListHandler)
+			data, err := handleList(apiOp, apiOp.Schema.ListHandler, handlers.MetricsListHandler( "200", handlers.ListHandler))
 			return http.StatusOK, data, err
 		}
-		data, err := handle(apiOp, apiOp.Schema.ByIDHandler, handlers.ByIDHandler)
+		data, err := handle(apiOp, apiOp.Schema.ByIDHandler, handlers.MetricsHandler("200", handlers.ByIDHandler))
 		return http.StatusOK, data, err
 	case http.MethodPatch:
 		fallthrough
 	case http.MethodPut:
-		data, err := handle(apiOp, apiOp.Schema.UpdateHandler, handlers.UpdateHandler)
+		data, err := handle(apiOp, apiOp.Schema.UpdateHandler, handlers.MetricsHandler("200", handlers.UpdateHandler))
 		return http.StatusOK, data, err
 	case http.MethodPost:
-		data, err := handle(apiOp, apiOp.Schema.CreateHandler, handlers.CreateHandler)
+		data, err := handle(apiOp, apiOp.Schema.CreateHandler, handlers.MetricsHandler("201", handlers.CreateHandler))
 		return http.StatusCreated, data, err
 	case http.MethodDelete:
-		data, err := handle(apiOp, apiOp.Schema.DeleteHandler, handlers.DeleteHandler)
+		data, err := handle(apiOp, apiOp.Schema.DeleteHandler, handlers.MetricsHandler("200", handlers.DeleteHandler))
 		return http.StatusOK, data, err
 	}
 
