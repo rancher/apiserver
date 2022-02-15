@@ -3,9 +3,12 @@ package server
 import (
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/rancher/apiserver/pkg/builtin"
 	"github.com/rancher/apiserver/pkg/handlers"
+	"github.com/rancher/apiserver/pkg/metrics"
 	"github.com/rancher/apiserver/pkg/parse"
 	"github.com/rancher/apiserver/pkg/subscribe"
 	"github.com/rancher/apiserver/pkg/types"
@@ -135,7 +138,11 @@ func (s *Server) handle(apiOp *types.APIRequest, parser parse.Parser) {
 		apiOp.Schema = apiOp.Schema.RequestModifier(apiOp, apiOp.Schema)
 	}
 
-	if code, data, err := s.handleOp(apiOp); err != nil {
+	requestStart := time.Now()
+	var code int
+	var data interface{}
+	var err error
+	if code, data, err = s.handleOp(apiOp); err != nil {
 		apiOp.WriteError(err)
 	} else if obj, ok := data.(types.APIObject); ok {
 		apiOp.WriteResponse(code, obj)
@@ -144,6 +151,7 @@ func (s *Server) handle(apiOp *types.APIRequest, parser parse.Parser) {
 	} else if code > http.StatusOK {
 		apiOp.Response.WriteHeader(code)
 	}
+	metrics.RecordRequestTime(apiOp.Schema.ID, apiOp.Method, strconv.Itoa(code), float64(time.Since(requestStart).Milliseconds()))
 }
 
 func (s *Server) handleOp(apiOp *types.APIRequest) (int, interface{}, error) {
@@ -173,7 +181,7 @@ func (s *Server) handleOp(apiOp *types.APIRequest) (int, interface{}, error) {
 	switch apiOp.Method {
 	case http.MethodGet:
 		if apiOp.Name == "" {
-			data, err := handleList(apiOp, apiOp.Schema.ListHandler, handlers.MetricsListHandler( "200", handlers.ListHandler))
+			data, err := handleList(apiOp, apiOp.Schema.ListHandler, handlers.MetricsListHandler("200", handlers.ListHandler))
 			return http.StatusOK, data, err
 		}
 		data, err := handle(apiOp, apiOp.Schema.ByIDHandler, handlers.MetricsHandler("200", handlers.ByIDHandler))
