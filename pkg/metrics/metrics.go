@@ -43,7 +43,7 @@ func IncTotalResponses(resource, method, code string) {
 	}
 }
 
-func RecordRequestTime(resource, method, code string, val float64) {
+func RecordResponseTime(resource, method, code string, val float64) {
 	if prometheusMetrics {
 		ResponseTime.With(
 			prometheus.Labels{
