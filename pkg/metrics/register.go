@@ -12,5 +12,6 @@ func init() {
 	if os.Getenv(metricsEnv) == "true" {
 		prometheusMetrics = true
 		prometheus.MustRegister(TotalResponses)
+		prometheus.MustRegister(RecordRequestTime)
 	}
 }
