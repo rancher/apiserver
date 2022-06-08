@@ -151,7 +151,9 @@ func (s *Server) handle(apiOp *types.APIRequest, parser parse.Parser) {
 	} else if code > http.StatusOK {
 		apiOp.Response.WriteHeader(code)
 	}
-	metrics.RecordResponseTime(apiOp.Schema.ID, apiOp.Method, strconv.Itoa(code), float64(time.Since(requestStart).Milliseconds()))
+	if apiOp.Schema != nil {
+		metrics.RecordResponseTime(apiOp.Schema.ID, apiOp.Method, strconv.Itoa(code), float64(time.Since(requestStart).Milliseconds()))
+	}
 }
 
 func (s *Server) handleOp(apiOp *types.APIRequest) (int, interface{}, error) {
