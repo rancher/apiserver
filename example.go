@@ -51,6 +51,7 @@ func main() {
 	s.Schemas.MustImportAndCustomize(Foo{}, func(schema *types.APISchema) {
 		schema.Store = &FooStore{}
 		schema.CollectionMethods = []string{http.MethodGet}
+		schema.ResourceMethods = []string{http.MethodGet}
 	})
 
 	// Register root handler to list api versions
@@ -59,7 +60,7 @@ func main() {
 	// Setup mux router to assign variables the server will look for (refer to MuxURLParser for all variable names)
 	router := mux.NewRouter()
 	router.Handle("/{prefix}/{type}", s)
-	router.Handle("/{prefix}/{type}/{id}", s)
+	router.Handle("/{prefix}/{type}/{name}", s)
 
 	// When a route is found construct a custom API request to serves up the API root content
 	router.NotFoundHandler = http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
