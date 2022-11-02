@@ -238,6 +238,8 @@ type APIObject struct {
 type APIObjectList struct {
 	Revision string
 	Continue string
+	Pages    int
+	Count    int
 	Objects  []APIObject
 }
 
