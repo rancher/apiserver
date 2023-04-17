@@ -2,13 +2,15 @@ module github.com/rancher/apiserver
 
 go 1.19
 
+replace github.com/rancher/wrangler => github.com/vardhaman22/wrangler v1.26.4-rancher1
+
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/prometheus/client_golang v1.14.0
 	github.com/rancher/wrangler v1.1.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	k8s.io/apimachinery v0.26.4
 	k8s.io/apiserver v0.26.4
