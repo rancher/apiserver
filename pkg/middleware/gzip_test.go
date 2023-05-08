@@ -5,15 +5,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/rancher/apiserver/pkg/fakes"
 	"github.com/stretchr/testify/assert"
 )
-
-// All other writers will attempt additional unnecessary logic
-// Implements http.responseWriter and io.Writer
-type DummyWriter struct {
-	header map[string][]string
-	buffer []byte
-}
 
 type DummyHandler struct {
 }
@@ -23,26 +17,10 @@ type DummyHandlerWithWrite struct {
 	next http.Handler
 }
 
-func NewDummyWriter() *DummyWriter {
-	return &DummyWriter{map[string][]string{}, []byte{}}
-}
-
 func NewRequest(accept string) *http.Request {
 	return &http.Request{
 		Header: map[string][]string{"Accept-Encoding": {accept}},
 	}
-}
-
-func (d *DummyWriter) Header() http.Header {
-	return d.header
-}
-
-func (d *DummyWriter) Write(p []byte) (n int, err error) {
-	d.buffer = append(d.buffer, p...)
-	return 0, nil
-}
-
-func (d *DummyWriter) WriteHeader(int) {
 }
 
 func (d *DummyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -59,14 +37,14 @@ func (d *DummyHandlerWithWrite) ServeHTTP(w http.ResponseWriter, r *http.Request
 func TestWriteHeader(t *testing.T) {
 	assert := assert.New(t)
 
-	w := NewDummyWriter()
+	w := fakes.NewDummyWriter()
 	gz := &gzipResponseWriter{gzip.NewWriter(w), w}
 
 	gz.Header().Set("Content-Length", "80")
 	gz.WriteHeader(400)
 	// Content-Length should have been deleted in WriterHeader, resulting in empty string
 	assert.Equal("", gz.Header().Get("Content-Length"))
-	assert.Equal(1, len(w.header["Content-Encoding"]))
+	assert.Equal(1, len(w.Header()["Content-Encoding"]))
 	assert.Equal("gzip", gz.Header().Get("Content-Encoding"))
 }
 
@@ -78,32 +56,32 @@ func TestSetContentWithoutWrite(t *testing.T) {
 	handlerFunc := Gzip(&DummyHandler{})
 
 	// Test when accept-encoding only contains gzip
-	rw := NewDummyWriter()
+	rw := fakes.NewDummyWriter()
 	req := NewRequest("gzip")
 	handlerFunc.ServeHTTP(rw, req)
 	// Content encoding should be empty since write has not been used
-	assert.Equal(0, len(rw.header["Content-Encoding"]))
+	assert.Equal(0, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("", rw.Header().Get("Content-Encoding"))
 
 	// Test when accept-encoding contains multiple options, including gzip
-	rw = NewDummyWriter()
+	rw = fakes.NewDummyWriter()
 	req = NewRequest("json, xml, gzip")
 	handlerFunc.ServeHTTP(rw, req)
-	assert.Equal(0, len(rw.header["Content-Encoding"]))
+	assert.Equal(0, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("", rw.Header().Get("Content-Encoding"))
 
 	// Test when accept-encoding is empty
 	req = NewRequest("")
-	rw = NewDummyWriter()
+	rw = fakes.NewDummyWriter()
 	handlerFunc.ServeHTTP(rw, req)
-	assert.Equal(0, len(rw.header["Content-Encoding"]))
+	assert.Equal(0, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("", rw.Header().Get("Content-Encoding"))
 
 	// Test when accept-encoding is is not empty but does not include gzip
 	req = NewRequest("json, xml")
-	rw = NewDummyWriter()
+	rw = fakes.NewDummyWriter()
 	handlerFunc.ServeHTTP(rw, req)
-	assert.Equal(0, len(rw.header["Content-Encoding"]))
+	assert.Equal(0, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("", rw.Header().Get("Content-Encoding"))
 }
 
@@ -116,34 +94,34 @@ func TestSetContentWithWrite(t *testing.T) {
 
 	// Test when accept-encoding only contains gzip
 	req := NewRequest("gzip")
-	rw := NewDummyWriter()
+	rw := fakes.NewDummyWriter()
 	handlerFunc.ServeHTTP(rw, req)
 	// Content encoding should be gzip since write has been used
-	assert.Equal(1, len(rw.header["Content-Encoding"]))
+	assert.Equal(1, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("gzip", rw.Header().Get("Content-Encoding"))
 
 	// Test when accept-encoding contains multiple options, including gzip
 	req = NewRequest("json, xml, gzip")
-	rw = NewDummyWriter()
+	rw = fakes.NewDummyWriter()
 	handlerFunc.ServeHTTP(rw, req)
 	// Content encoding should be gzip since write has been used
-	assert.Equal(1, len(rw.header["Content-Encoding"]))
+	assert.Equal(1, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("gzip", rw.Header().Get("Content-Encoding"))
 
 	// Test when accept-encoding is empty
 	req = NewRequest("")
-	rw = NewDummyWriter()
+	rw = fakes.NewDummyWriter()
 	handlerFunc.ServeHTTP(rw, req)
 	// Content encoding should be empty since gzip is not an accepted encoding
-	assert.Equal(0, len(rw.header["Content-Encoding"]))
+	assert.Equal(0, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("", rw.Header().Get("Content-Encoding"))
 
 	// Test when accept-encoding is is not empty but does not include gzip
 	req = NewRequest("json, xml")
-	rw = NewDummyWriter()
+	rw = fakes.NewDummyWriter()
 	handlerFunc.ServeHTTP(rw, req)
 	// Content encoding should be empty since gzip is not an accepted encoding
-	assert.Equal(0, len(rw.header["Content-Encoding"]))
+	assert.Equal(0, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("", rw.Header().Get("Content-Encoding"))
 }
 
@@ -158,17 +136,17 @@ func TestMultipleWrites(t *testing.T) {
 	handlerFuncTwoWrites := Gzip(&DummyHandlerWithWrite{next: &DummyHandlerWithWrite{}})
 
 	req := NewRequest("gzip")
-	rw := NewDummyWriter()
+	rw := fakes.NewDummyWriter()
 	handlerFuncOneWrite.ServeHTTP(rw, req)
-	oneWriteResult := rw.buffer
+	oneWriteResult := rw.Buffer()
 
 	req = NewRequest("gzip")
-	rw = NewDummyWriter()
+	rw = fakes.NewDummyWriter()
 	handlerFuncTwoWrites.ServeHTTP(rw, req)
-	multiWriteResult := rw.buffer
+	multiWriteResult := rw.Buffer()
 
 	// Content encoding should be gzip since write has been used (twice)
-	assert.Equal(1, len(rw.header["Content-Encoding"]))
+	assert.Equal(1, len(rw.Header()["Content-Encoding"]))
 	assert.Equal("gzip", rw.Header().Get("Content-Encoding"))
 	assert.NotEqual(multiWriteResult, oneWriteResult)
 }
