@@ -28,3 +28,25 @@ func (d *DummyWriter) Write(p []byte) (n int, err error) {
 
 func (d *DummyWriter) WriteHeader(int) {
 }
+
+type DummyHandler struct {
+}
+
+func (d *DummyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+}
+
+type DummyHandlerWithWrite struct {
+	DummyHandler
+	next http.Handler
+}
+
+func NewDummyHandlerWithWrite(h http.Handler) *DummyHandlerWithWrite {
+	return &DummyHandlerWithWrite{next: h}
+}
+
+func (d *DummyHandlerWithWrite) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte{0, 0})
+	if d.next != nil {
+		d.next.ServeHTTP(w, r)
+	}
+}

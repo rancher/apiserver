@@ -9,27 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type DummyHandler struct {
-}
-
-type DummyHandlerWithWrite struct {
-	DummyHandler
-	next http.Handler
-}
-
 func NewRequest(accept string) *http.Request {
 	return &http.Request{
 		Header: map[string][]string{"Accept-Encoding": {accept}},
-	}
-}
-
-func (d *DummyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-}
-
-func (d *DummyHandlerWithWrite) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte{0, 0})
-	if d.next != nil {
-		d.next.ServeHTTP(w, r)
 	}
 }
 
@@ -53,7 +35,7 @@ func TestSetContentWithoutWrite(t *testing.T) {
 	assert := assert.New(t)
 
 	// Test content encoding header when write is not used
-	handlerFunc := Gzip(&DummyHandler{})
+	handlerFunc := Gzip(&fakes.DummyHandler{})
 
 	// Test when accept-encoding only contains gzip
 	rw := fakes.NewDummyWriter()
@@ -90,7 +72,7 @@ func TestSetContentWithWrite(t *testing.T) {
 	assert := assert.New(t)
 
 	// Test content encoding header when write is used
-	handlerFunc := Gzip(&DummyHandlerWithWrite{})
+	handlerFunc := Gzip(&fakes.DummyHandlerWithWrite{})
 
 	// Test when accept-encoding only contains gzip
 	req := NewRequest("gzip")
@@ -130,10 +112,10 @@ func TestMultipleWrites(t *testing.T) {
 	assert := assert.New(t)
 
 	// Handler function that contains one writing handler
-	handlerFuncOneWrite := Gzip(&DummyHandlerWithWrite{})
+	handlerFuncOneWrite := Gzip(&fakes.DummyHandlerWithWrite{})
 
 	// Handler function that contains a chain of two writing handlers
-	handlerFuncTwoWrites := Gzip(&DummyHandlerWithWrite{next: &DummyHandlerWithWrite{}})
+	handlerFuncTwoWrites := Gzip(fakes.NewDummyHandlerWithWrite(&fakes.DummyHandlerWithWrite{}))
 
 	req := NewRequest("gzip")
 	rw := fakes.NewDummyWriter()
