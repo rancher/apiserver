@@ -11,8 +11,8 @@ require (
 	github.com/rancher/wrangler v1.1.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
-	k8s.io/apimachinery v0.25.12
-	k8s.io/apiserver v0.25.12
+	k8s.io/apimachinery v0.25.13
+	k8s.io/apiserver v0.25.13
 )
 
 require (
