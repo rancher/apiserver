@@ -33,7 +33,7 @@ There are a few main types to be aware of.
 
 [APISchema](https://pkg.go.dev/github.com/rancher/apiserver/pkg/types#APISchema)
 adds additional functionality on top of [wrangler's Schema
-type](https://pkg.go.dev/github.com/rancher/wrangler/pkg/schemas#Schema).
+type](https://pkg.go.dev/github.com/rancher/wrangler/v2/pkg/schemas#Schema).
 In addition to metadata about the type of object it represents, it also defines
 CRUD handlers, formatting transformations, and the backing Store.
 
@@ -139,7 +139,7 @@ this kind of internal schema.
 could also be used directly if desired:
 
 ```go
-import "github.com/rancher/wrangler/pkg/schemas"
+import "github.com/rancher/wrangler/v2/pkg/schemas"
 s.Schemas.MustAddSchema(types.APISchema{
     Schema: &schemas.Schema{
         ID: "duck",
