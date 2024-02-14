@@ -1,0 +1,18 @@
+FROM registry.suse.com/bci/golang:1.20
+
+ARG DAPPER_HOST_ARCH
+ENV ARCH $DAPPER_HOST_ARCH
+ARG CACHEBUST=1
+RUN zypper -n up && \
+    zypper -n in git vim curl wget
+RUN rm -rf /go/src /go/pkg
+
+# prevents `detected dubious ownership in repository` git error due to uid/gid not matching when using bind mounts
+RUN git config -f /etc/gitconfig --add safe.directory /go/src/github.com/rancher/apiserver
+
+ENV DAPPER_SOURCE /go/src/github.com/rancher/apiserver/
+ENV DAPPER_RUN_ARGS "-v apiserver-pkg:/go/pkg -v apiserver-cache:/root/.cache/go-build"
+WORKDIR ${DAPPER_SOURCE}
+
+ENTRYPOINT ["./scripts/entry"]
+CMD ["ci"]
