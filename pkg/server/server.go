@@ -106,7 +106,7 @@ func (s *Server) handle(apiOp *types.APIRequest, parser parse.Parser) {
 		apiOp.Schemas = s.Schemas
 	}
 
-	if err := parser(apiOp, parse.MuxURLParser); err != nil {
+	if err := parser(apiOp, s.URLParser); err != nil {
 		// ensure defaults set so writer is assigned
 		s.setDefaults(apiOp)
 		apiOp.WriteError(err)
