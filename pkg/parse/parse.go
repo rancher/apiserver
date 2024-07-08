@@ -40,6 +40,9 @@ type Parser func(apiOp *types.APIRequest, urlParser URLParser) error
 
 func Parse(apiOp *types.APIRequest, urlParser URLParser) error {
 	var err error
+	if urlParser == nil {
+		urlParser = MuxURLParser
+	}
 
 	if apiOp.Request == nil {
 		apiOp.Request, err = http.NewRequest("GET", "/", nil)
