@@ -300,3 +300,7 @@ func (a *accessControl) CanList(apiOp *types.APIRequest, schema *types.APISchema
 }
 s.AccessControl = &accessControl{}
 ```
+
+# Versioning
+
+See [VERSION.md](VERSION.md).
