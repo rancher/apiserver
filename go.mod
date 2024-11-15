@@ -8,7 +8,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rancher/wrangler/v3 v3.0.1-rc.2
 	github.com/sirupsen/logrus v1.9.3
