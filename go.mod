@@ -2,7 +2,7 @@ module github.com/rancher/apiserver
 
 go 1.22.0
 
-toolchain go1.22.1
+toolchain go1.22.9
 
 require (
 	github.com/ghodss/yaml v1.0.0
