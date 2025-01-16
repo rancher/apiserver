@@ -109,6 +109,20 @@ func (mr *MockAccessControlMockRecorder) CanCreate(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanCreate", reflect.TypeOf((*MockAccessControl)(nil).CanCreate), arg0, arg1)
 }
 
+// CanPatch mocks base method.
+func (m *MockAccessControl) CanPatch(arg0 *types.APIRequest, arg1 types.APIObject, arg2 *types.APISchema) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanPatch", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CanPatch indicates an expected call of CanPatch.
+func (mr *MockAccessControlMockRecorder) CanPatch(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanPatch", reflect.TypeOf((*MockAccessControl)(nil).CanPatch), arg0, arg1)
+}
+
 // CanDelete mocks base method.
 func (m *MockAccessControl) CanDelete(arg0 *types.APIRequest, arg1 types.APIObject, arg2 *types.APISchema) error {
 	m.ctrl.T.Helper()
