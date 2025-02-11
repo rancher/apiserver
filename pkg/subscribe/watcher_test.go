@@ -193,6 +193,10 @@ func (m *mockAC) CanUpdate(apiOp *types.APIRequest, obj types.APIObject, schema 
 	panic("not implemented")
 }
 
+func (m *mockAC) CanPatch(apiOp *types.APIRequest, obj types.APIObject, schema *types.APISchema) error {
+	panic("not implemented")
+}
+
 func (m *mockAC) CanDelete(apiOp *types.APIRequest, obj types.APIObject, schema *types.APISchema) error {
 	panic("not implemented")
 }
