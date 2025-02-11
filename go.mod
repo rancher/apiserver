@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/prometheus/client_golang v1.20.5
-	github.com/rancher/wrangler v1.1.1-0.20230831050635-df1bd5aae9df
+	github.com/rancher/wrangler v1.1.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.27.16
