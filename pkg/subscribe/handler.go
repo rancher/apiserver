@@ -2,6 +2,7 @@ package subscribe
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -35,10 +36,12 @@ type Subscribe struct {
 	Namespace       string           `json:"namespace,omitempty"`
 	ID              string           `json:"id,omitempty"`
 	Selector        string           `json:"selector,omitempty"`
+	// DebounceMs will debounce event when Mode is SubscriptionModeNotification. Unused for other Mode values.
+	DebounceMs int `json:"debounceMs,omitempty"`
 }
 
 func (s *Subscribe) key() string {
-	return s.ResourceType + "/" + s.Namespace + "/" + s.ID + "/" + s.Selector + "/" + string(s.Mode)
+	return s.ResourceType + "/" + s.Namespace + "/" + s.ID + "/" + s.Selector + "/" + string(s.Mode) + "/" + strconv.Itoa(s.DebounceMs)
 }
 
 func NewHandler(getter SchemasGetter, serverVersion string) types.RequestListHandler {
