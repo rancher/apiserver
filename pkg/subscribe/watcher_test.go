@@ -34,6 +34,7 @@ func Test_stream(t *testing.T) {
 				{
 					Name:         "resource.create",
 					ResourceType: "watchable-resource",
+					Data:         data,
 				},
 			},
 		},
@@ -54,6 +55,7 @@ func Test_stream(t *testing.T) {
 					Name:         "resource.create",
 					ResourceType: "watchable-resource",
 					Namespace:    "test-ns",
+					Data:         data,
 				},
 			},
 		},
@@ -74,6 +76,7 @@ func Test_stream(t *testing.T) {
 					Name:         "resource.create",
 					ResourceType: "watchable-resource",
 					Selector:     "foo=bar",
+					Data:         data,
 				},
 			},
 		},
@@ -94,6 +97,7 @@ func Test_stream(t *testing.T) {
 					Name:         "resource.create",
 					ResourceType: "watchable-resource",
 					ID:           "test-resource",
+					Data:         data,
 				},
 			},
 		},
@@ -120,6 +124,26 @@ func Test_stream(t *testing.T) {
 			},
 			hasAccess: false,
 			wantError: true,
+		},
+		{
+			name: "notification",
+			sub: Subscribe{
+				ResourceType: "watchable-resource",
+				Mode:         SubscriptionModeNotification,
+			},
+			hasAccess: true,
+			wantEvents: []types.APIEvent{
+				{
+					Name:         "resource.start",
+					ResourceType: "watchable-resource",
+					Mode:         string(SubscriptionModeNotification),
+				},
+				{
+					Name:         "resource.changes",
+					ResourceType: "watchable-resource",
+					Mode:         string(SubscriptionModeNotification),
+				},
+			},
 		},
 	}
 	ws := WatchSession{
@@ -168,6 +192,8 @@ func Test_stream(t *testing.T) {
 	}
 }
 
+const data = "data"
+
 type mockStore struct{}
 
 func (m *mockStore) ByID(apiOp *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
@@ -195,6 +221,7 @@ func (m *mockStore) Watch(apiOp *types.APIRequest, schema *types.APISchema, w ty
 	go func() {
 		c <- types.APIEvent{
 			Name: "resource.create",
+			Data: data,
 		}
 		close(c)
 	}()

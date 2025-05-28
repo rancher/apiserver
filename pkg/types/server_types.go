@@ -232,6 +232,7 @@ type APIEvent struct {
 	ID           string    `json:"id,omitempty"`
 	Selector     string    `json:"selector,omitempty"`
 	Revision     string    `json:"revision,omitempty"`
+	Mode         string    `json:"mode,omitempty"`
 	Object       APIObject `json:"-"`
 	Error        error     `json:"-"`
 	// Data is the output format of the object
