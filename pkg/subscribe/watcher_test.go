@@ -14,11 +14,11 @@ import (
 
 func Test_stream(t *testing.T) {
 	tests := []struct {
-		name           string
-		sub            Subscribe
-		hasAccess      bool
-		wantStartEvent types.APIEvent
-		wantError      bool
+		name       string
+		sub        Subscribe
+		hasAccess  bool
+		wantEvents []types.APIEvent
+		wantError  bool
 	}{
 		{
 			name: "stream all",
@@ -26,9 +26,15 @@ func Test_stream(t *testing.T) {
 				ResourceType: "watchable-resource",
 			},
 			hasAccess: true,
-			wantStartEvent: types.APIEvent{
-				Name:         "resource.start",
-				ResourceType: "watchable-resource",
+			wantEvents: []types.APIEvent{
+				{
+					Name:         "resource.start",
+					ResourceType: "watchable-resource",
+				},
+				{
+					Name:         "resource.create",
+					ResourceType: "watchable-resource",
+				},
 			},
 		},
 		{
@@ -38,10 +44,17 @@ func Test_stream(t *testing.T) {
 				Namespace:    "test-ns",
 			},
 			hasAccess: true,
-			wantStartEvent: types.APIEvent{
-				Name:         "resource.start",
-				ResourceType: "watchable-resource",
-				Namespace:    "test-ns",
+			wantEvents: []types.APIEvent{
+				{
+					Name:         "resource.start",
+					ResourceType: "watchable-resource",
+					Namespace:    "test-ns",
+				},
+				{
+					Name:         "resource.create",
+					ResourceType: "watchable-resource",
+					Namespace:    "test-ns",
+				},
 			},
 		},
 		{
@@ -51,10 +64,17 @@ func Test_stream(t *testing.T) {
 				Selector:     "foo=bar",
 			},
 			hasAccess: true,
-			wantStartEvent: types.APIEvent{
-				Name:         "resource.start",
-				ResourceType: "watchable-resource",
-				Selector:     "foo=bar",
+			wantEvents: []types.APIEvent{
+				{
+					Name:         "resource.start",
+					ResourceType: "watchable-resource",
+					Selector:     "foo=bar",
+				},
+				{
+					Name:         "resource.create",
+					ResourceType: "watchable-resource",
+					Selector:     "foo=bar",
+				},
 			},
 		},
 		{
@@ -64,10 +84,17 @@ func Test_stream(t *testing.T) {
 				ID:           "test-resource",
 			},
 			hasAccess: true,
-			wantStartEvent: types.APIEvent{
-				Name:         "resource.start",
-				ResourceType: "watchable-resource",
-				ID:           "test-resource",
+			wantEvents: []types.APIEvent{
+				{
+					Name:         "resource.start",
+					ResourceType: "watchable-resource",
+					ID:           "test-resource",
+				},
+				{
+					Name:         "resource.create",
+					ResourceType: "watchable-resource",
+					ID:           "test-resource",
+				},
 			},
 		},
 		{
@@ -120,20 +147,23 @@ func Test_stream(t *testing.T) {
 	for _, test := range tests {
 		ws.apiOp.AccessControl = &mockAC{hasAccess: test.hasAccess}
 		t.Run(test.name, func(t *testing.T) {
-			result := make(chan types.APIEvent, 1)
+			result := make(chan types.APIEvent, 2)
 			err := ws.stream(context.TODO(), test.sub, result)
 			if test.wantError {
 				assert.NotNil(t, err)
 				return
 			}
 			assert.Nil(t, err)
-			var gotEvent types.APIEvent
-			select {
-			case gotEvent = <-result:
-			case <-time.After(10 * time.Millisecond):
-				assert.FailNow(t, "failed to receive startup message from websocket")
+			var gotEvents []types.APIEvent
+			for range len(test.wantEvents) {
+				select {
+				case gotEvent := <-result:
+					gotEvents = append(gotEvents, gotEvent)
+				case <-time.After(10 * time.Millisecond):
+					assert.FailNow(t, "failed to receive startup message from websocket")
+				}
 			}
-			assert.Equal(t, test.wantStartEvent, gotEvent)
+			assert.Equal(t, test.wantEvents, gotEvents)
 		})
 	}
 }
@@ -163,7 +193,9 @@ func (m *mockStore) Delete(apiOp *types.APIRequest, schema *types.APISchema, id 
 func (m *mockStore) Watch(apiOp *types.APIRequest, schema *types.APISchema, w types.WatchRequest) (chan types.APIEvent, error) {
 	c := make(chan types.APIEvent)
 	go func() {
-		c <- types.APIEvent{}
+		c <- types.APIEvent{
+			Name: "resource.create",
+		}
 		close(c)
 	}()
 	return c, nil
