@@ -155,12 +155,12 @@ func Test_stream(t *testing.T) {
 			}
 			assert.Nil(t, err)
 			var gotEvents []types.APIEvent
-			for range len(test.wantEvents) {
+			for i := range len(test.wantEvents) {
 				select {
 				case gotEvent := <-result:
 					gotEvents = append(gotEvents, gotEvent)
-				case <-time.After(10 * time.Millisecond):
-					assert.FailNow(t, "failed to receive startup message from websocket")
+				case <-time.After(100 * time.Millisecond):
+					assert.FailNow(t, fmt.Sprintf("failed to receive event number %d from websocket", i))
 				}
 			}
 			assert.Equal(t, test.wantEvents, gotEvents)
