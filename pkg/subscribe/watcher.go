@@ -95,6 +95,8 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 			if event.Error == nil {
 				event.ID = sub.ID
 				event.Selector = sub.Selector
+				event.ResourceType = sub.ResourceType
+				event.Namespace = sub.Namespace
 				select {
 				case result <- event:
 				default:
