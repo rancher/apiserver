@@ -96,6 +96,7 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 		for event := range c {
 			if event.Error != nil {
 				sendErr(result, event.Error, sub)
+				continue
 			}
 
 			var ev types.APIEvent
