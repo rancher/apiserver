@@ -27,10 +27,10 @@ type debouncer struct {
 	outCh chan types.APIEvent
 }
 
-func newDebouncer(debouceRate time.Duration, eventsCh chan types.APIEvent) *debouncer {
+func newDebouncer(debounceRate time.Duration, eventsCh chan types.APIEvent) *debouncer {
 	d := &debouncer{
-		debounceRate: debouceRate,
-		timer:        time.NewTimer(debouceRate),
+		debounceRate: debounceRate,
+		timer:        time.NewTimer(debounceRate),
 		inCh:         eventsCh,
 		outCh:        make(chan types.APIEvent),
 	}
