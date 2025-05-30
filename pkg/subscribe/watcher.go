@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/rancher/apiserver/pkg/types"
@@ -90,6 +91,17 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 		Mode:         string(sub.Mode),
 	}
 
+	if sub.Mode == SubscriptionModeNotification {
+		debounceRate := time.Duration(sub.DebounceMs) * time.Millisecond
+		if debounceRate == 0 {
+			debounceRate = 5000 * time.Millisecond
+		}
+
+		debounce := newDebouncer(debounceRate, c)
+		go debounce.Run(ctx)
+		c = debounce.NotificationsChan()
+	}
+
 	if c == nil {
 		<-s.apiOp.Context().Done()
 	} else {
@@ -99,24 +111,14 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 				continue
 			}
 
-			var ev types.APIEvent
-			switch sub.Mode {
-			case SubscriptionModeDefault:
-				ev = event
-			case SubscriptionModeNotification:
-				ev = types.APIEvent{
-					Name: string(SubscriptionModeNotification),
-				}
-			}
-
-			ev.ID = sub.ID
-			ev.Selector = sub.Selector
-			ev.ResourceType = sub.ResourceType
-			ev.Namespace = sub.Namespace
-			ev.Mode = string(sub.Mode)
+			event.ID = sub.ID
+			event.Selector = sub.Selector
+			event.ResourceType = sub.ResourceType
+			event.Namespace = sub.Namespace
+			event.Mode = string(sub.Mode)
 
 			select {
-			case result <- ev:
+			case result <- event:
 			default:
 				// handle slow consumer
 				go func() {
