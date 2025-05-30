@@ -23,7 +23,7 @@ const (
 	SubscriptionModeDefault SubscriptionMode = ""
 	// SubscriptionModeNotification tells the subscription to return a notification event
 	// whenever an event comes in. The consumer is expected to then make another list request
-	// request to get the latest data.
+	// to get the latest data.
 	SubscriptionModeNotification SubscriptionMode = "resource.changes"
 )
 
