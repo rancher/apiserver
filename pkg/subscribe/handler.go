@@ -15,17 +15,30 @@ var upgrader = websocket.Upgrader{
 	EnableCompression: true,
 }
 
+type SubscriptionMode string
+
+const (
+	// SubscriptionModeDefault tells the subscription to return the events
+	// as they come in with the object embedded inside
+	SubscriptionModeDefault SubscriptionMode = ""
+	// SubscriptionModeNotification tells the subscription to return a notification event
+	// whenever an event comes in. The consumer is expected to then make another list request
+	// to get the latest data.
+	SubscriptionModeNotification SubscriptionMode = "resource.changes"
+)
+
 type Subscribe struct {
-	Stop            bool   `json:"stop,omitempty"`
-	ResourceType    string `json:"resourceType,omitempty"`
-	ResourceVersion string `json:"resourceVersion,omitempty"`
-	Namespace       string `json:"namespace,omitempty"`
-	ID              string `json:"id,omitempty"`
-	Selector        string `json:"selector,omitempty"`
+	Mode            SubscriptionMode `json:"mode,omitempty"`
+	Stop            bool             `json:"stop,omitempty"`
+	ResourceType    string           `json:"resourceType,omitempty"`
+	ResourceVersion string           `json:"resourceVersion,omitempty"`
+	Namespace       string           `json:"namespace,omitempty"`
+	ID              string           `json:"id,omitempty"`
+	Selector        string           `json:"selector,omitempty"`
 }
 
 func (s *Subscribe) key() string {
-	return s.ResourceType + "/" + s.Namespace + "/" + s.ID + "/" + s.Selector
+	return s.ResourceType + "/" + s.Namespace + "/" + s.ID + "/" + s.Selector + "/" + string(s.Mode)
 }
 
 func NewHandler(getter SchemasGetter, serverVersion string) types.RequestListHandler {

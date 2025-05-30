@@ -32,6 +32,7 @@ func (s *WatchSession) stop(sub Subscribe, resp chan<- types.APIEvent) {
 			Namespace:    sub.Namespace,
 			ID:           sub.ID,
 			Selector:     sub.Selector,
+			Mode:         string(sub.Mode),
 		}
 	}
 	delete(s.watchers, sub.key())
@@ -86,30 +87,44 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 		Namespace:    sub.Namespace,
 		ID:           sub.ID,
 		Selector:     sub.Selector,
+		Mode:         string(sub.Mode),
 	}
 
 	if c == nil {
 		<-s.apiOp.Context().Done()
 	} else {
 		for event := range c {
-			if event.Error == nil {
-				event.ID = sub.ID
-				event.Selector = sub.Selector
-				event.ResourceType = sub.ResourceType
-				event.Namespace = sub.Namespace
-				select {
-				case result <- event:
-				default:
-					// handle slow consumer
-					go func() {
-						for range c {
-							// continue to drain until close
-						}
-					}()
-					return nil
-				}
-			} else {
+			if event.Error != nil {
 				sendErr(result, event.Error, sub)
+				continue
+			}
+
+			var ev types.APIEvent
+			switch sub.Mode {
+			case SubscriptionModeDefault:
+				ev = event
+			case SubscriptionModeNotification:
+				ev = types.APIEvent{
+					Name: string(SubscriptionModeNotification),
+				}
+			}
+
+			ev.ID = sub.ID
+			ev.Selector = sub.Selector
+			ev.ResourceType = sub.ResourceType
+			ev.Namespace = sub.Namespace
+			ev.Mode = string(sub.Mode)
+
+			select {
+			case result <- ev:
+			default:
+				// handle slow consumer
+				go func() {
+					for range c {
+						// continue to drain until close
+					}
+				}()
+				return nil
 			}
 		}
 	}
@@ -181,6 +196,7 @@ func sendErr(resp chan<- types.APIEvent, err error, sub Subscribe) {
 		Namespace:    sub.Namespace,
 		ID:           sub.ID,
 		Selector:     sub.Selector,
+		Mode:         string(sub.Mode),
 		Error:        err,
 	}
 }
