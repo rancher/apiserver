@@ -119,7 +119,9 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 
 			select {
 			case result <- event:
-			default:
+			// Give enough time for consumer to handle events, for
+			// example when many objects are in the c channel
+			case <-time.After(10 * time.Millisecond):
 				// handle slow consumer
 				go func() {
 					for range c {
