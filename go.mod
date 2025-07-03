@@ -7,7 +7,6 @@ toolchain go1.24.2
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/mock v1.6.0
-	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/prometheus/client_golang v1.22.0
 	github.com/rancher/wrangler/v3 v3.2.2-rc.3
