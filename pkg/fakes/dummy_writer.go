@@ -45,7 +45,7 @@ func NewDummyHandlerWithWrite(h http.Handler) *DummyHandlerWithWrite {
 }
 
 func (d *DummyHandlerWithWrite) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte{0, 0})
+	_, _ = w.Write([]byte{0, 0})
 	if d.next != nil {
 		d.next.ServeHTTP(w, r)
 	}
