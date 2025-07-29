@@ -222,56 +222,47 @@ for more than one schema version to coexist.
 
 ### subscribe
 
-Also not built in, but can be added with
+The subscribe schema provides special handling for real-time event streaming. It is not enabled in the default server but can be added via:
 
 ```go
 import "github.com/rancher/apiserver/pkg/subscribe"
 subscribe.Register(s.Schemas, nil, "")
 ```
 
-The `Subscribe` schema provides special handling for listening for events on a
-channel and passing them through a websocket.
+When a client makes a request to the /v1/subscribe endpoint, a custom handler upgrades the HTTP connection to a WebSocket. This WebSocket then serves as a bidirectional message bus. The client sends JSON messages to start or stop watching specific resource types, and the server pushes JSON event messages back to the client as they occur.
+Under the hood, when the server receives a start message, it calls the Watch method on the Store associated with the requested resourceType. It then forwards events from the resulting Go channel to the client. The implementation of the Store and the content of the events are determined by the consuming application (e.g., github.com/rancher/steve).
+A useful command-line tool for interacting with the subscribe endpoint is [websocat](https://github.com/vi/websocat).
 
-A useful tool for connecting to a websocket without a browser is
-[websocat](https://github.com/vi/websocat).
+#### subscribe WebSocket Message Protocol
 
-A subscription stream is started by making a websocket request for the
-`subscribe` type, which is routed to the
-[Subscribe](https://pkg.go.dev/github.com/rancher/apiserver/pkg/subscribe#Subscribe)
-schema. It uses a custom handler to upgrade the connection to a websocket
-connection.
+All messages are JSON objects. The server expects client messages to contain a name field indicating the desired action (`start` or `stop`). The server sends messages to the client with a name field indicating the event type (e.g., `resource.change`).
 
-The event stream is started when the client requests a resource type over the
-websocket connection. The message from the client consists of the resource type
-and optional filtering parameters. For example:
+The event stream is started when the client requests a resource type over the websocket connection. The message from the client consists of the resource type and optional filtering parameters. For example:
 
 ```
 {"resourceType": "apps.deployments", "namespace": "default", "resourceVersion": "1000"}
 ```
 
-will start watching events for the "apps.deployments" collection in namespace
-"default" starting with the collection resource version "1000" (see [the
-Kubernetes documentation](https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions)
-for a detailed discussion of resource version semantics). Under the hood, the
-API server calls the `Watch` method for the schema's store for the resource
-type.
+will start watching events for the `apps.deployments` collection in namespace `default` starting with the collection resource version `1000` (see [the Kubernetes documentation](https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions) for a detailed discussion of resource version semantics).
 
-The watch could be started for an individual resource by specifying the "id"
-field, for a set of labeled resources by using the "selector" field, or for all
-resources by omitting the "namespace" field.
+To stop a watch deliberately, a client must send a stop message. For example: `{"stop": true, "resourceType": "apps.deployments"}`. If the client simply closes the WebSocket connection, all associated watches are automatically terminated.
 
-To stop a watch deliberately, issue a "stop" message:
+Reference:
 
-```
-{"stop": true, "resourceType": "apps.deployments"}
-```
+| Direction          | Short name        | Fields                                                                                                                                                                                                 | Description                                                                                                                                                                                                                                                                              |
+|:-------------------|:------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Client \-\> Server | `start`           | `resourceType`: (string)<br/> id: (string, optional)<br/> `namespace`: (string, optional)<br/> selector: (string, optional)<br/> `resourceVersion`: (string, optional)<br/> `mode`: (string, optional) | Instructs the server to begin watching a resource or collection. The server routes this request to the Watch method of the Store for the specified resourceType. The optional parameters are passed to the Store to narrow the scope of the watch. `mode` is explained separately below. |
+| Server \-\> Client | `resource.start`  | `name`: `"resource.start"`<br/> `namespace`: (string)<br/> `resourceType`: (string)<br/> `data`: (object)                                                                                              | Signals to the client that the watching has started.                                                                                                                                                                                                                                     |
+| Server \-\> Client | `resource.change` | `name`: `"resource.change"`<br/> `resourceType`: (string)<br/>`namespace`: (string, optional)<br/> `mode`: (string, optional)<br/> `data`: (object)                                                    | Represents a change event from the Store's watch channel. The structure of the data payload is defined by the Store implementation. `data` depends on `mode` (see below).                                                                                                                |
+| Client \-\> Server | `stop`            | `stop`: `true`  (boolean)<br/> `resourceType`: (string)<br/> `id`: (string, optional)<br/> `namespace`: (string, optional)                                                                             | Instructs the server to terminate a specific, previously started watch. The parameters must match the original start message.                                                                                                                                                            |
+| Server \-\> Client | `resource.stop`   | `name`: `"resource.stop"`<br/> `namespace`: (string)<br/> `resourceType`: (string)<br/> `data`: (object)                                                                                               | Signals to the client that the watching has stoped.                                                                                                                                                                                                                                      |
+| Server \-\> Client | `resource.error`  | `name`: `resource.error` (string)<br/> `data`: (object)                                                                                                                                                | Indicates an error occurred during the watch. The data payload contains details about the error.                                                                                                                                                                                         |
 
-Otherwise, the connection will time out after 30 minutes, and will terminate
-with a message with name "resource.stop". The client is responsible for
-restarting the connection.
+#### subscribe modes
 
-If an error is encounted, a message with name "resource.error" will be sent
-with error details in the message.
+When opening a connection via the `start` message, the optional `mode` parameter changes subsequent `resource.changed` events:
+ - `"mode":""` (or by default when not specified): `resource.changed` events contain the full changed object in `data`
+ - `"mode":"resource.changes"`: `resource.changed` events are mere notifications and contain no `data`
 
 Access Control
 --------------
