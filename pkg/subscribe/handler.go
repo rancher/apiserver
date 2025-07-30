@@ -63,7 +63,9 @@ func handler(apiOp *types.APIRequest, getter SchemasGetter, serverVersion string
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+	defer func() {
+		_ = c.Close()
+	}()
 
 	watches := NewWatchSession(apiOp, getter)
 	defer watches.Close()
@@ -114,7 +116,9 @@ func writeData(apiOp *types.APIRequest, getter SchemasGetter, c *websocket.Conn,
 	if err != nil {
 		return err
 	}
-	defer messageWriter.Close()
+	defer func() {
+		_ = messageWriter.Close()
+	}()
 
 	return json.NewEncoder(messageWriter).Encode(event)
 }
