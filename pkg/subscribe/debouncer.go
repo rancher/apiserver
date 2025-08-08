@@ -23,9 +23,8 @@ type debouncer struct {
 	timer        *time.Timer
 	debounceRate time.Duration
 
-	inCh     chan types.APIEvent
-	outCh    chan types.APIEvent
-	latestRV string
+	inCh  chan types.APIEvent
+	outCh chan types.APIEvent
 }
 
 func newDebouncer(debounceRate time.Duration, eventsCh chan types.APIEvent) *debouncer {
@@ -58,12 +57,10 @@ loop:
 			}
 
 			d.lock.Lock()
-			d.latestRV = ev.Revision
 			switch state {
 			case FirstNotification:
 				d.outCh <- types.APIEvent{
-					Name:     string(SubscriptionModeNotification),
-					Revision: ev.Revision,
+					Name: string(SubscriptionModeNotification),
 				}
 				state = TimerStopped
 			case TimerStopped:
@@ -74,11 +71,10 @@ loop:
 		case <-d.timer.C:
 			d.lock.Lock()
 			d.outCh <- types.APIEvent{
-				Name:     string(SubscriptionModeNotification),
-				Revision: d.latestRV,
+				Name: string(SubscriptionModeNotification),
 			}
-			state = TimerStopped
 			d.timer.Stop()
+			state = TimerStopped
 			d.lock.Unlock()
 		}
 	}
