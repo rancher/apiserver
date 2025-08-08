@@ -69,11 +69,12 @@ loop:
 			case TimerStopped:
 				state = TimerStarted
 				d.timer.Reset(d.debounceRate)
-			}
-
-			d.dbcQueueCh <- types.APIEvent{
-				Name:     string(SubscriptionModeNotification),
-				Revision: ev.Revision,
+				fallthrough
+			default:
+				d.dbcQueueCh <- types.APIEvent{
+					Name:     string(SubscriptionModeNotification),
+					Revision: ev.Revision,
+				}
 			}
 			d.lock.Unlock()
 		case <-d.timer.C:

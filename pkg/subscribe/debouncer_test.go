@@ -2,6 +2,7 @@ package subscribe
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,8 +18,10 @@ func TestDebouncer(t *testing.T) {
 	// 5 events, but we'll expect only two
 	count := 5
 	eventsCh := make(chan types.APIEvent, count)
-	for range count {
-		eventsCh <- types.APIEvent{}
+	for i := range count {
+		eventsCh <- types.APIEvent{
+			Revision: strconv.Itoa(i),
+		}
 	}
 	time.AfterFunc(200*time.Millisecond, func() {
 		close(eventsCh)
@@ -29,10 +32,12 @@ func TestDebouncer(t *testing.T) {
 
 	expectedEvents := []types.APIEvent{
 		{
-			Name: string(SubscriptionModeNotification),
+			Name:     string(SubscriptionModeNotification),
+			Revision: "0",
 		},
 		{
-			Name: string(SubscriptionModeNotification),
+			Name:     string(SubscriptionModeNotification),
+			Revision: "1",
 		},
 	}
 
