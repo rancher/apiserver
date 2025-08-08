@@ -2,6 +2,7 @@ package subscribe
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,8 +18,11 @@ func TestDebouncer(t *testing.T) {
 	// 5 events, but we'll expect only two
 	count := 5
 	eventsCh := make(chan types.APIEvent, count)
-	for range count {
-		eventsCh <- types.APIEvent{}
+	for i := range count {
+		eventsCh <- types.APIEvent{
+			Revision: strconv.Itoa(i),
+		}
+
 	}
 	time.AfterFunc(200*time.Millisecond, func() {
 		close(eventsCh)
@@ -27,12 +31,19 @@ func TestDebouncer(t *testing.T) {
 	deb := newDebouncer(debounceRate, eventsCh)
 	go deb.Run(ctx)
 
+	// First and last revisions because of the latestRV
+	// variable being updated more frequently than the
+	// debouncer puts the events at the output. Not a
+	// problem, because we want the most up to date
+	// revision always.
 	expectedEvents := []types.APIEvent{
 		{
-			Name: string(SubscriptionModeNotification),
+			Name:     string(SubscriptionModeNotification),
+			Revision: "0",
 		},
 		{
-			Name: string(SubscriptionModeNotification),
+			Name:     string(SubscriptionModeNotification),
+			Revision: "4",
 		},
 	}
 
