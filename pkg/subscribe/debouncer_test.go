@@ -2,7 +2,6 @@ package subscribe
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -50,7 +49,6 @@ func TestDebouncer(t *testing.T) {
 
 	var gotEvents []types.APIEvent
 	for ev := range deb.NotificationsChan() {
-		fmt.Println(ev)
 		gotEvents = append(gotEvents, ev)
 	}
 	assert.Equal(t, expectedEvents, gotEvents)
