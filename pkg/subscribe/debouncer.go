@@ -23,8 +23,9 @@ type debouncer struct {
 	timer        *time.Timer
 	debounceRate time.Duration
 
-	inCh  chan types.APIEvent
-	outCh chan types.APIEvent
+	inCh       chan types.APIEvent
+	dbcQueueCh chan types.APIEvent
+	outCh      chan types.APIEvent
 }
 
 func newDebouncer(debounceRate time.Duration, eventsCh chan types.APIEvent) *debouncer {
@@ -33,6 +34,7 @@ func newDebouncer(debounceRate time.Duration, eventsCh chan types.APIEvent) *deb
 		timer:        time.NewTimer(debounceRate),
 		inCh:         eventsCh,
 		outCh:        make(chan types.APIEvent),
+		dbcQueueCh:   make(chan types.APIEvent, 1000),
 	}
 	d.timer.Stop()
 	return d
@@ -60,26 +62,36 @@ loop:
 			switch state {
 			case FirstNotification:
 				d.outCh <- types.APIEvent{
-					Name: string(SubscriptionModeNotification),
+					Name:     string(SubscriptionModeNotification),
+					Revision: ev.Revision,
 				}
 				state = TimerStopped
 			case TimerStopped:
 				state = TimerStarted
 				d.timer.Reset(d.debounceRate)
 			}
+
+			d.dbcQueueCh <- types.APIEvent{
+				Name:     string(SubscriptionModeNotification),
+				Revision: ev.Revision,
+			}
 			d.lock.Unlock()
 		case <-d.timer.C:
 			d.lock.Lock()
-			d.outCh <- types.APIEvent{
-				Name: string(SubscriptionModeNotification),
+			d.outCh <- <-d.dbcQueueCh
+			if len(d.dbcQueueCh) > 0 {
+				state = TimerStarted
+				d.timer.Reset(d.debounceRate)
+			} else {
+				state = TimerStopped
+				d.timer.Stop()
 			}
-			d.timer.Stop()
-			state = TimerStopped
 			d.lock.Unlock()
 		}
 	}
 
 	close(d.outCh)
+	close(d.dbcQueueCh)
 }
 
 func (d *debouncer) NotificationsChan() chan types.APIEvent {
