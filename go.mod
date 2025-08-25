@@ -12,7 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rancher/wrangler/v3 v3.2.0-rc.3
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	k8s.io/apimachinery v0.32.1
 	k8s.io/apiserver v0.32.1
 )
