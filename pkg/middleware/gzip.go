@@ -27,7 +27,7 @@ func (g gzipResponseWriter) Write(b []byte) (int, error) {
 // Close uses gzip to write gzip footer if message is gzip encoded
 func (g gzipResponseWriter) Close(writer *gzip.Writer) {
 	if g.Header().Get("Content-Encoding") == "gzip" {
-		writer.Close()
+		_ = writer.Close()
 	}
 }
 

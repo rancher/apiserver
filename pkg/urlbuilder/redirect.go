@@ -22,7 +22,7 @@ func RedirectRewrite(next http.Handler) http.Handler {
 			r.Hijacker = h
 		}
 		next.ServeHTTP(r, req)
-		r.Close()
+		_ = r.Close()
 	})
 }
 
