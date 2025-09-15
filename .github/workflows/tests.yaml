@@ -25,4 +25,4 @@ jobs:
       with:
         version: v2.4.0
 
-    - run: make test
+    - run: go env -w GOTOOLCHAIN=go1.25.0+auto && make test
