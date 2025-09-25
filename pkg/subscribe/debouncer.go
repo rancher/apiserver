@@ -58,7 +58,9 @@ loop:
 			}
 
 			d.lock.Lock()
-			d.latestRV = ev.Revision
+			if d.latestRV < ev.Revision {
+				d.latestRV = ev.Revision
+			}
 			switch state {
 			case FirstNotification:
 				d.outCh <- types.APIEvent{
