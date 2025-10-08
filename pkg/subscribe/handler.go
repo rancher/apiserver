@@ -63,9 +63,7 @@ func handler(apiOp *types.APIRequest, getter SchemasGetter, serverVersion string
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = c.Close()
-	}()
+	defer c.Close()
 
 	watches := NewWatchSession(apiOp, getter)
 	defer watches.Close()
@@ -74,7 +72,7 @@ func handler(apiOp *types.APIRequest, getter SchemasGetter, serverVersion string
 	t := time.NewTicker(30 * time.Second)
 	defer t.Stop()
 	defer func() {
-		// Ensure that events get fully consumed
+		// Ensure that events gets fully consumed
 		go func() {
 			for range events {
 			}
@@ -116,9 +114,7 @@ func writeData(apiOp *types.APIRequest, getter SchemasGetter, c *websocket.Conn,
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = messageWriter.Close()
-	}()
+	defer messageWriter.Close()
 
 	return json.NewEncoder(messageWriter).Encode(event)
 }
