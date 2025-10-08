@@ -31,17 +31,13 @@ func setup(apiOp *types.APIRequest) (*types.APIRequest, io.Closer) {
 
 func (g *GzipWriter) Write(apiOp *types.APIRequest, code int, obj types.APIObject) {
 	apiOp, closer := setup(apiOp)
-	defer func() {
-		_ = closer.Close()
-	}()
+	defer closer.Close()
 	g.ResponseWriter.Write(apiOp, code, obj)
 }
 
 func (g *GzipWriter) WriteList(apiOp *types.APIRequest, code int, obj types.APIObjectList) {
 	apiOp, closer := setup(apiOp)
-	defer func() {
-		_ = closer.Close()
-	}()
+	defer closer.Close()
 	g.ResponseWriter.WriteList(apiOp, code, obj)
 }
 
