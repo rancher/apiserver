@@ -77,6 +77,14 @@ func TestDebouncerCanceled(t *testing.T) {
 		// all good
 	}
 
+	// Writing to in is not blocked, since it must be drained
+	for range 3 {
+		select {
+		case in <- types.APIEvent{}:
+		case <-time.After(10 * time.Millisecond):
+			t.Error("input channel is not being drained")
+		}
+	}
 	close(in)
 
 	select {
