@@ -42,3 +42,52 @@ func TestDebouncer(t *testing.T) {
 	}
 	assert.Equal(t, expectedEvents, gotEvents)
 }
+
+func TestDebouncerCanceled(t *testing.T) {
+	in := make(chan types.APIEvent)
+	debouncer := newDebouncer(100*time.Millisecond, in)
+	out := debouncer.NotificationsChan()
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel() // already canceled
+
+	runFinished := make(chan struct{})
+	go func() {
+		debouncer.Run(ctx)
+		close(runFinished)
+	}()
+
+	select {
+	case <-runFinished:
+		t.Error("debouncer finished before original channel was closed")
+	case <-out:
+		t.Error("debouncer channel closed before the original channel")
+	case <-time.After(200 * time.Millisecond):
+		// all good
+	}
+
+	// Writing to in is not blocked, since it must be drained
+	for range 3 {
+		select {
+		case in <- types.APIEvent{}:
+		case <-time.After(10 * time.Millisecond):
+			t.Error("input channel is not being drained")
+		}
+	}
+	close(in)
+
+	select {
+	case <-time.After(200 * time.Millisecond):
+		t.Error("output channel was not closed")
+	case _, ok := <-runFinished:
+		if ok {
+			t.Error("unexpected item received while waiting for the output channel to be closed")
+		}
+	}
+
+	select {
+	case <-time.After(200 * time.Millisecond):
+		t.Error("debouncer goroutine didn't finish")
+	case <-runFinished:
+	}
+}
