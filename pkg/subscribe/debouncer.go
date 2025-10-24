@@ -36,22 +36,25 @@ func newDebouncer(debounceRate time.Duration, eventsCh chan types.APIEvent) *deb
 }
 
 func (d *debouncer) Run(ctx context.Context) {
+	defer close(d.outCh)
+
 	var latestRV string
 	state := FirstNotification
-loop:
 	for {
 		select {
 		case <-ctx.Done():
-			break loop
+			// Despite context being closed, respect the original channel state, only closing outCh when inCh is closed
+			for range d.inCh {
+			}
+			return
 		case ev, ok := <-d.inCh:
+			if !ok {
+				return
+			}
 			if ev.Error != nil {
 				ev.Name = string(SubscriptionModeNotification)
 				d.outCh <- ev
-				break loop
-			}
-
-			if !ok {
-				break loop
+				return
 			}
 
 			latestRV = ev.Revision
@@ -75,8 +78,6 @@ loop:
 			d.timer.Stop()
 		}
 	}
-
-	close(d.outCh)
 }
 
 func (d *debouncer) NotificationsChan() chan types.APIEvent {
