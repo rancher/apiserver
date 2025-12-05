@@ -31,12 +31,12 @@ func TestJSONLinesEncoder(t *testing.T) {
 	}{
 		{
 			name:       "empty collection list",
-			args:       args{&types.GenericCollection{collection, []*types.RawResource{}}},
+			args:       args{&types.GenericCollection{collection, []*types.RawResource{}, []types.SummaryEntry{}}},
 			wantWriter: "{\"links\":{},\"actions\":{},\"resourceType\":\"Test\"}\n\n",
 		},
 		{
 			name:       "valid collection list",
-			args:       args{&types.GenericCollection{collection, data}},
+			args:       args{&types.GenericCollection{collection, data, []types.SummaryEntry{}}},
 			wantWriter: "{\"links\":{},\"actions\":{},\"resourceType\":\"Test\"}\n{\"links\":null}\n{\"links\":null}\n{\"links\":null}\n\n",
 		},
 		{
