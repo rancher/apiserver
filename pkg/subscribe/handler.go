@@ -36,7 +36,7 @@ type Subscribe struct {
 	Namespace       string           `json:"namespace,omitempty"`
 	ID              string           `json:"id,omitempty"`
 	Selector        string           `json:"selector,omitempty"`
-	// DebounceMs will debounce events when Mode is SubscriptionModeNotification. Unused for other Mode values.
+	// DebounceMs will debounce event when Mode is SubscriptionModeNotification. Unused for other Mode values.
 	DebounceMs int `json:"debounceMs,omitempty"`
 }
 

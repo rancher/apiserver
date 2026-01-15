@@ -2,6 +2,7 @@ package subscribe
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/rancher/apiserver/pkg/types"
@@ -17,6 +18,8 @@ const (
 )
 
 type debouncer struct {
+	lock sync.Mutex
+
 	timer        *time.Timer
 	debounceRate time.Duration
 
@@ -38,7 +41,6 @@ func newDebouncer(debounceRate time.Duration, eventsCh chan types.APIEvent) *deb
 func (d *debouncer) Run(ctx context.Context) {
 	defer close(d.outCh)
 
-	var latestRV string
 	state := FirstNotification
 	for {
 		select {
@@ -57,25 +59,26 @@ func (d *debouncer) Run(ctx context.Context) {
 				return
 			}
 
-			latestRV = ev.Revision
+			d.lock.Lock()
 			switch state {
 			case FirstNotification:
 				d.outCh <- types.APIEvent{
-					Name:     string(SubscriptionModeNotification),
-					Revision: ev.Revision,
+					Name: string(SubscriptionModeNotification),
 				}
 				state = TimerStopped
 			case TimerStopped:
 				state = TimerStarted
 				d.timer.Reset(d.debounceRate)
 			}
+			d.lock.Unlock()
 		case <-d.timer.C:
+			d.lock.Lock()
 			d.outCh <- types.APIEvent{
-				Name:     string(SubscriptionModeNotification),
-				Revision: latestRV,
+				Name: string(SubscriptionModeNotification),
 			}
-			state = TimerStopped
 			d.timer.Stop()
+			state = TimerStopped
+			d.lock.Unlock()
 		}
 	}
 }

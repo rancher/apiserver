@@ -107,7 +107,7 @@ func (s *WatchSession) stream(ctx context.Context, sub Subscribe, result chan<- 
 	} else {
 		for event := range c {
 			if event.Error != nil {
-				sendEvent(result, event, sub)
+				sendErr(result, event.Error, sub)
 				continue
 			}
 
@@ -202,17 +202,5 @@ func sendErr(resp chan<- types.APIEvent, err error, sub Subscribe) {
 		Selector:     sub.Selector,
 		Mode:         string(sub.Mode),
 		Error:        err,
-	}
-}
-
-func sendEvent(resp chan<- types.APIEvent, event types.APIEvent, sub Subscribe) {
-	resp <- types.APIEvent{
-		ResourceType: sub.ResourceType,
-		Namespace:    sub.Namespace,
-		ID:           sub.ID,
-		Selector:     sub.Selector,
-		Mode:         string(sub.Mode),
-		Error:        event.Error,
-		Revision:     event.Revision,
 	}
 }
