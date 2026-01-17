@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rancher/wrangler/v2 v2.1.4
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.28.6
 	k8s.io/apiserver v0.28.6
