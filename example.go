@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/rancher/apiserver/pkg/server"
 	"github.com/rancher/apiserver/pkg/store/apiroot"
 	"github.com/rancher/apiserver/pkg/store/empty"
@@ -57,13 +56,13 @@ func main() {
 	// Register root handler to list api versions
 	apiroot.Register(s.Schemas, []string{"v1", "v2"})
 
-	// Setup mux router to assign variables the server will look for (refer to MuxURLParser for all variable names)
-	router := mux.NewRouter()
-	router.Handle("/{prefix}/{type}", s)
-	router.Handle("/{prefix}/{type}/{name}", s)
+	// Setup HTTP router with path parameters (Go 1.22+ pattern matching)
+	router := http.NewServeMux()
+	router.Handle("GET /{prefix}/{type}", s)
+	router.Handle("GET /{prefix}/{type}/{name}", s)
 
 	// When a route is found construct a custom API request to serves up the API root content
-	router.NotFoundHandler = http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		s.Handle(&types.APIRequest{
 			Request:   r,
 			Response:  rw,

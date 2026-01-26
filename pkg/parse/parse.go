@@ -179,7 +179,7 @@ func Body(req *http.Request) (types.APIObject, error) {
 }
 
 func valuesToBody(input map[string][]string) types.APIObject {
-	result := map[string]interface{}{}
+	result := map[string]any{}
 	for k, v := range input {
 		result[k] = v
 	}
