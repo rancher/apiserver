@@ -153,15 +153,13 @@ s.Schemas.MustAddSchema(types.APISchema{
 
 Routes need to be defined in order for requests to be routed to the correct
 schema. The parser assumes that some or all of these variables may be defined
-in the as part of a [gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux)
-router: "type", "name", "namespace", "link", "prefix", "action". It uses these
-assumptions to decode the `http.Request` into an `APIRequest`. For example,
-for a route like:
+as part of the HTTP router path patterns: "type", "name", "namespace", "link", 
+"prefix", "action". It uses these assumptions to decode the `http.Request` into 
+an `APIRequest`. For example, for a route like:
 
 ```go
-import "github.com/gorilla/mux"
-router := mux.NewRouter()
-router.Handle("/{prefix}/{type}/{namespace}/{name}", s)
+router := http.NewServeMux()
+router.Handle("GET /{prefix}/{type}/{namespace}/{name}", s)
 ```
 
 then a request like

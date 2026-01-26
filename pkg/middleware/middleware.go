@@ -2,11 +2,12 @@ package middleware
 
 import (
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
-type Chain []mux.MiddlewareFunc
+// MiddlewareFunc is a function that wraps an http.Handler
+type MiddlewareFunc func(http.Handler) http.Handler
+
+type Chain []MiddlewareFunc
 
 func (m Chain) Handler(handler http.Handler) http.Handler {
 	rtn := handler

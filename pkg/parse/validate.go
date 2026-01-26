@@ -19,6 +19,9 @@ var (
 	}
 )
 
+// ValidateMethod checks if the HTTP method used in the APIRequest is allowed based on the request's schema and type.
+//
+// Returns an error if the method is not supported.
 func ValidateMethod(request *types.APIRequest) error {
 	if request.Action != "" && request.Method == http.MethodPost {
 		return nil
