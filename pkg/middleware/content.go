@@ -6,27 +6,24 @@ import (
 	"net"
 	"net/http"
 	"reflect"
-	"strings"
 )
 
+// ContentTypeWriter is a custom ResponseWriter that sets the Content-Type
+// header if it is not already set.
 type ContentTypeWriter struct {
 	http.ResponseWriter
 }
 
+// Write sets the Content-Type header if not already set, then writes the response.
 func (c ContentTypeWriter) Write(b []byte) (int, error) {
-	found := false
-	for k := range c.Header() {
-		if strings.EqualFold(k, "Content-Type") {
-			found = true
-			break
-		}
-	}
+	found := c.Header().Get("Content-Type") != ""
 	if !found {
 		c.Header().Set("Content-Type", http.DetectContentType(b))
 	}
 	return c.ResponseWriter.Write(b)
 }
 
+// ContentType is a middleware that sets the Content-Type header if it is not already set.
 func ContentType(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		writer := ContentTypeWriter{ResponseWriter: w}

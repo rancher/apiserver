@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/rancher/apiserver/pkg/server"
 	"github.com/rancher/apiserver/pkg/store/apiroot"
@@ -72,6 +73,11 @@ func main() {
 	})
 
 	// Start API Server
-	log.Print("Listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+
+	port := ":8080"
+	if v := os.Getenv("PORT"); v != "" {
+		port = v
+	}
+	log.Printf("Listening on %s", port)
+	log.Fatal(http.ListenAndServe(port, router))
 }
