@@ -73,7 +73,7 @@ func (p *ServerSuite) TestServer_handle() {
 				Schemas:         new(types.APISchemas),
 				AccessControl:   &SchemaBasedAccess{},
 				Parser:          parse.Parse,
-				URLParser:       parse.MuxURLParser,
+				URLParser:       parse.StandardURLParser,
 			},
 			args: args{
 				apiOp:  apiRequest,
