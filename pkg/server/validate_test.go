@@ -75,5 +75,6 @@ func TestCheckCSRFIssuesCookieWhenMissing(t *testing.T) {
 	require.NotEmpty(t, csrf.Value)
 	require.Equal(t, "/", csrf.Path)
 	require.True(t, csrf.Secure)
+	require.Equal(t, http.SameSiteLaxMode, csrf.SameSite)
+	require.False(t, csrf.HttpOnly)
 }
-
