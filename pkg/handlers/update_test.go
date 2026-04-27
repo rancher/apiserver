@@ -94,6 +94,7 @@ func TestUpdateHandlerPutParsesBodyAndStoresIt(t *testing.T) {
 	obj, err := UpdateHandler(apiReq)
 	require.NoError(t, err)
 	require.Equal(t, "tigers", obj.ID)
+	require.NoError(t, err)
 }
 
 func TestUpdateHandlerWithoutStoreReturnsNotFoundError(t *testing.T) {
