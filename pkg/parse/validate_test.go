@@ -130,9 +130,9 @@ func TestValidate(t *testing.T) {
 		expectedErr:       true,
 		expectedErrorCode: &validation.PermissionDenied,
 	})
+	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			t.Parallel()
 			req := &types.APIRequest{
 				Method: test.method,
 				Action: test.action,
@@ -142,6 +142,9 @@ func TestValidate(t *testing.T) {
 			}
 			if len(test.collection) > 0 || len(test.resource) > 0 {
 				req.Schema = schemaWithMethods(test.collection, test.resource)
+			}
+			if test.description == "Delete allowed if in collection" {
+				fmt.Println("stop here")
 			}
 			err := ValidateMethod(req)
 			if test.expectedErr {
