@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -54,12 +55,16 @@ func TestIsBrowser(t *testing.T) {
 		userAgent:   "MoZilLA/5.0",
 		accept:      "*/*",
 		status:      true})
+	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			req.Header.Set("User-Agent", test.userAgent)
 			req.Header.Set("Accept", test.accept)
+			if test.description == "Rejects empty accept-header when checking is on" {
+				fmt.Println("Stop here")
+			}
 			status := IsBrowser(req, test.checkAccepts)
 			require.Equal(t, test.status, status)
 		})
@@ -98,6 +103,7 @@ func TestMatchBrowser(t *testing.T) {
 		userAgent:   "MoZilLA/5.0",
 		accept:      "*/*",
 		status:      true})
+	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			t.Parallel()
