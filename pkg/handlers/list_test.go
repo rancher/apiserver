@@ -51,9 +51,9 @@ func TestByIDHandler_NoStore(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	ac := fakes.NewMockAccessControl(ctrl)
 	apiReq := newByIDRequest("two", "", ac, nil, nil)
-	ac.EXPECT().CanCreate(gomock.Any(), gomock.Any())
+	ac.EXPECT().CanGet(gomock.Any(), gomock.Any())
 
-	_, err := CreateHandler(apiReq)
+	_, err := ByIDHandler(apiReq)
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no store found")

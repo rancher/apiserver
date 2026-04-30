@@ -46,9 +46,9 @@ func TestDeleteHandler_NoStore(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	ac := fakes.NewMockAccessControl(ctrl)
 	apiReq := newDeleteAPIRequest("no-store-here", ac, nil)
-	ac.EXPECT().CanCreate(gomock.Any(), gomock.Any())
+	ac.EXPECT().CanDelete(gomock.Any(), gomock.Any(), gomock.Any())
 
-	_, err := CreateHandler(apiReq)
+	_, err := DeleteHandler(apiReq)
 
 	require.Error(t, err)
 
