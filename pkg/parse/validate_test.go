@@ -143,9 +143,6 @@ func TestValidate(t *testing.T) {
 			if len(test.collection) > 0 || len(test.resource) > 0 {
 				req.Schema = schemaWithMethods(test.collection, test.resource)
 			}
-			if test.description == "Delete allowed if in collection" {
-				fmt.Println("stop here")
-			}
 			err := ValidateMethod(req)
 			if test.expectedErr {
 				require.Error(t, err)
