@@ -54,7 +54,6 @@ func TestIsBrowser(t *testing.T) {
 		userAgent:   "MoZilLA/5.0",
 		accept:      "*/*",
 		status:      true})
-	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			t.Parallel()
@@ -99,7 +98,6 @@ func TestMatchBrowser(t *testing.T) {
 		userAgent:   "MoZilLA/5.0",
 		accept:      "*/*",
 		status:      true})
-	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			t.Parallel()
