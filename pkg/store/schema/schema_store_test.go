@@ -47,9 +47,9 @@ func TestByID(t *testing.T) {
 		resourceToSearch: "thingamajig",
 		expectedErr:      true,
 	})
-	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 			testResource := "widget"
 			schema := newTestSchema(testResource, []string{http.MethodGet}, []string{http.MethodGet})
 			schemaMap := map[string]*types.APISchema{testResource: schema}
@@ -237,9 +237,9 @@ func TestFilterSchemas(t *testing.T) {
 		},
 		expectedIDs: []string{"parent"},
 	})
-	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 			schemaMap := test.getSchemaMap()
 			apiOp := newTestRequest(schemaMap)
 

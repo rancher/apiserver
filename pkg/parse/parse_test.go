@@ -173,9 +173,9 @@ func TestParseResponseFormat(t *testing.T) {
 		userAgent:      "curl/5.0",
 		accept:         "application/jsonl",
 		expectedFormat: "jsonl"})
-	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 			queryPath := test.formatParameter
 			if queryPath == "" {
 				queryPath = "/"
@@ -198,7 +198,6 @@ func TestParseMethodFallsBackToRequestMethod(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPatch, "/", nil)
 	require.Equal(t, http.MethodPatch, parseMethod(req))
 }
-
 
 func TestBodyReturnsMultipartValuesWhenMultipartFormExists(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/", nil)

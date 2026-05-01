@@ -54,9 +54,9 @@ func TestIsBrowser(t *testing.T) {
 		userAgent:   "MoZilLA/5.0",
 		accept:      "*/*",
 		status:      true})
-	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			req.Header.Set("User-Agent", test.userAgent)
 			req.Header.Set("Accept", test.accept)
@@ -98,9 +98,9 @@ func TestMatchBrowser(t *testing.T) {
 		userAgent:   "MoZilLA/5.0",
 		accept:      "*/*",
 		status:      true})
-	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			req.Header.Set("User-Agent", test.userAgent)
 			req.Header.Set("Accept", test.accept)
