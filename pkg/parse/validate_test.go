@@ -130,9 +130,9 @@ func TestValidate(t *testing.T) {
 		expectedErr:       true,
 		expectedErrorCode: &validation.PermissionDenied,
 	})
-	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 			req := &types.APIRequest{
 				Method: test.method,
 				Action: test.action,
