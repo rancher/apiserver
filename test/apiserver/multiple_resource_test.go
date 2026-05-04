@@ -354,6 +354,16 @@ func TestAPIRoot_MultipleVersions_MultipleSchemas(t *testing.T) {
 		{"dogs", "pluto", len(basicDogs)},
 		{"cats", "felix", len(basicCats)},
 	}
+// mustDecodeLinks decodes a JSON response and returns the "links" map.
+func mustDecodeLinks(t *testing.T, resp *http.Response) map[string]interface{} {
+	t.Helper()
+	var body map[string]interface{}
+	err := json.NewDecoder(resp.Body).Decode(&body)
+	require.NoError(t, err)
+	links, ok := body["links"].(map[string]interface{})
+	require.True(t, ok, "response body should contain a 'links' object")
+	return links
+}
 
 	for _, version := range []string{"v1", "v2"} {
 		for _, r := range resources {
@@ -414,60 +424,159 @@ func TestAPIRoot_ByID_LinksIncludeRegisteredSchemas(t *testing.T) {
 	}
 }
 
-func TestBothResources_ListWorks(t *testing.T) {
+// TestAPIRoot_MultipleSchemas_SingleVersion verifies that two resource types
+// registered on the same APISchemas are both accessible under a single version
+// prefix after calling apiroot.Register once.
+func TestAPIRoot_MultipleSchemas_SingleVersion(t *testing.T) {
 	s := server.DefaultAPIServer()
-
-	rootSchemas := types.EmptyAPISchemas()
-
-	// ---- V3 (Dogs) ----
-	v3Schemas := types.EmptyAPISchemas()
-	dogStore := NewDogStore(nil)
-	v3Schemas.MustImportAndCustomize(Dog{}, func(s *types.APISchema) {
-		s.Store = dogStore
+	s.Schemas.MustImportAndCustomize(Dog{}, func(schema *types.APISchema) {
+		schema.Store = NewDogStore(nil)
+		schema.CollectionMethods = []string{http.MethodGet}
+		schema.ResourceMethods = []string{http.MethodGet}
 	})
-
-	// ---- V4 (Cats) ----
-	v4Schemas := types.EmptyAPISchemas()
-	catStore := NewCatStore(nil)
-	v4Schemas.MustImportAndCustomize(Cat{}, func(s *types.APISchema) {
-		s.Store = catStore
+	s.Schemas.MustImportAndCustomize(Cat{}, func(schema *types.APISchema) {
+		schema.Store = NewCatStore(nil)
+		schema.CollectionMethods = []string{http.MethodGet}
+		schema.ResourceMethods = []string{http.MethodGet}
 	})
+	apiroot.Register(s.Schemas, []string{"v1"})
 
-	// ---- Mount API roots ----
-	apiroot.Register(rootSchemas, []string{"/v3"}, "dogs")
-	apiroot.Register(rootSchemas, []string{"/v4"}, "cats")
-
-	s.Schemas = rootSchemas
-	ts := httptest.NewServer(s)
+	ts := httptest.NewServer(newMultiPrefixRouter(s))
 	defer ts.Close()
 
-	// Verify neither is on v1
-	for _, pet := range []string{"cats", "dogs"} {
-		func() {
-			resp, err := http.Get(ts.URL + "/v1/" + pet)
-			require.NoError(t, err)
-			defer resp.Body.Close()
-			require.Equal(t, http.StatusNotFound, resp.StatusCode)
-		}()
-	}
-
-	// Verify we can get dogs on /v3
-	func() {
-		resp, err := http.Get(ts.URL + "/v3/dogs")
+	t.Run("list dogs", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/v1/dogs")
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
+		items := mustDecodeList(t, resp)
+		assert.Len(t, items, len(basicDogs))
+		for i, basicDog := range basicDogs {
+			assert.Equal(t, basicDog.ID, items[i].(map[string]interface{})["id"])
+			assert.Equal(t, basicDog.Name, items[i].(map[string]interface{})["name"])
+		}
+	})
 
+	t.Run("list cats", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/v1/cats")
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		items := mustDecodeList(t, resp)
+		assert.Len(t, items, len(basicCats))
+		for i, basicCat := range basicCats {
+			assert.Equal(t, basicCat.ID, items[i].(map[string]interface{})["id"])
+			assert.Equal(t, basicCat.Name, items[i].(map[string]interface{})["name"])
+		}
+	})
+
+	t.Run("get dog by id", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/v1/dogs/pluto")
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 		var body map[string]interface{}
-		require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
-		data, ok := body["data"]
-		require.True(t, ok)
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		require.NoError(t, err)
+		assert.Equal(t, "pluto", body["id"])
+	})
 
-		items, ok := data.([]interface{})
-		require.True(t, ok)
-		require.Len(t, items, 2)
+	t.Run("get cat by id", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/v1/cats/felix")
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		var body map[string]interface{}
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		require.NoError(t, err)
+		assert.Equal(t, "felix", body["id"])
+	})
+}
 
-		//require.Equal(t, "pluto", items[0].ID)
-		//require.Equal(t, "krypto", items[1].ID)
-	}()
+// TestAPIRoot_MultipleVersions_MultipleSchemas verifies that when
+// apiroot.Register is called with multiple version strings, each resource type
+// is accessible under every version prefix, both as a collection and by ID.
+func TestAPIRoot_MultipleVersions_MultipleSchemas(t *testing.T) {
+	s := server.DefaultAPIServer()
+	s.Schemas.MustImportAndCustomize(Dog{}, func(schema *types.APISchema) {
+		schema.Store = NewDogStore(nil)
+		schema.CollectionMethods = []string{http.MethodGet}
+		schema.ResourceMethods = []string{http.MethodGet}
+	})
+	s.Schemas.MustImportAndCustomize(Cat{}, func(schema *types.APISchema) {
+		schema.Store = NewCatStore(nil)
+		schema.CollectionMethods = []string{http.MethodGet}
+		schema.ResourceMethods = []string{http.MethodGet}
+	})
+	apiroot.Register(s.Schemas, []string{"v1", "v2"})
+
+	ts := httptest.NewServer(newMultiPrefixRouter(s))
+	defer ts.Close()
+
+	resources := []struct {
+		plural   string
+		sampleID string
+		count    int
+	}{
+		{"dogs", "pluto", len(basicDogs)},
+		{"cats", "felix", len(basicCats)},
+	}
+
+	for _, version := range []string{"v1", "v2"} {
+		for _, r := range resources {
+			version, r := version, r
+
+			t.Run("list "+version+"/"+r.plural, func(t *testing.T) {
+				resp, err := http.Get(ts.URL + "/" + version + "/" + r.plural)
+				require.NoError(t, err)
+				defer resp.Body.Close()
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+				assert.Len(t, mustDecodeList(t, resp), r.count)
+			})
+
+			t.Run("get "+version+"/"+r.plural+"/"+r.sampleID, func(t *testing.T) {
+				resp, err := http.Get(ts.URL + "/" + version + "/" + r.plural + "/" + r.sampleID)
+				require.NoError(t, err)
+				defer resp.Body.Close()
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			})
+		}
+	}
+}
+
+// TestAPIRoot_ByID_LinksIncludeRegisteredSchemas verifies that fetching the
+// apiRoot resource for a given version returns a "links" map that includes an
+// entry for every registered collection. This confirms that apiroot.Register
+// correctly surfaces all schema collections to API clients navigating via
+// hypermedia links.
+func TestAPIRoot_ByID_LinksIncludeRegisteredSchemas(t *testing.T) {
+	s := server.DefaultAPIServer()
+	s.Schemas.MustImportAndCustomize(Dog{}, func(schema *types.APISchema) {
+		schema.Store = NewDogStore(nil)
+		schema.CollectionMethods = []string{http.MethodGet}
+		schema.ResourceMethods = []string{http.MethodGet}
+	})
+	s.Schemas.MustImportAndCustomize(Cat{}, func(schema *types.APISchema) {
+		schema.Store = NewCatStore(nil)
+		schema.CollectionMethods = []string{http.MethodGet}
+		schema.ResourceMethods = []string{http.MethodGet}
+	})
+	apiroot.Register(s.Schemas, []string{"v1", "v2"})
+
+	ts := httptest.NewServer(newMultiPrefixRouter(s))
+	defer ts.Close()
+
+	for _, version := range []string{"v1", "v2"} {
+		version := version
+		t.Run(version, func(t *testing.T) {
+			resp, err := http.Get(ts.URL + "/" + version + "/apiRoot/" + version)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+
+			links := mustDecodeLinks(t, resp)
+			assert.Contains(t, links, "dogs", "apiRoot links should include dogs collection")
+			assert.Contains(t, links, "cats", "apiRoot links should include cats collection")
+		})
+	}
 }
