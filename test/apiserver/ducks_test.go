@@ -4,6 +4,7 @@ package apiserver_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -136,7 +137,7 @@ func TestDuckAPI_ListGetOnly(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	func() {
+	t.Run("can list ducks", func(t *testing.T) {
 		resp, err := http.Get(ts.URL + "/v1/ducks")
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -150,26 +151,25 @@ func TestDuckAPI_ListGetOnly(t *testing.T) {
 		items, ok := data.([]interface{})
 		require.True(t, ok)
 		require.Len(t, items, 2)
-	}()
+	})
 
-	func() {
+	t.Run("can get ducks by ID", func(t *testing.T) {
 		resp, err := http.Get(ts.URL + "/v1/ducks/donald")
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-	}()
+	})
 
-	func() {
+	t.Run("can't get unknown duck", func(t *testing.T) {
 		resp, err := http.Get(ts.URL + "/v1/ducks/dynasty")
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	}()
+	})
 
 	// Verify the others fail
 
-	// Verify post fails
-	func() {
+	t.Run("can't create ducks", func(t *testing.T) {
 		payload := []byte(`{"name":"Daffy"}`)
 		bodyAsBytes, err := json.Marshal(payload)
 		require.NoError(t, err)
@@ -177,21 +177,20 @@ func TestDuckAPI_ListGetOnly(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
-	}()
+	})
 
-	// Verify delete fails
-	func() {
+	t.Run("can't delete ducks", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodDelete, ts.URL+"/v1/ducks/donald", nil)
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
-	}()
+	})
 
-	// Verify put and patch fail
 	for _, requestMethod := range []string{http.MethodPut, http.MethodPatch} {
-		func() {
+		requestMethod := requestMethod
+		t.Run(fmt.Sprintf("can't modify existing ducks with %s", requestMethod), func(t *testing.T) {
 			payload := []byte(`{"color":"teal"}`)
 			req, err := http.NewRequest(requestMethod, ts.URL+"/v1/ducks/donald", bytes.NewReader(payload))
 			require.NoError(t, err)
@@ -201,21 +200,8 @@ func TestDuckAPI_ListGetOnly(t *testing.T) {
 
 			defer resp.Body.Close()
 			require.Equal(t, http.StatusForbidden, resp.StatusCode)
-		}()
+		})
 	}
-
-	// Verify patch fails
-	func() {
-		payload := []byte(`{"color":"teal"}`)
-		req, err := http.NewRequest(http.MethodPut, ts.URL+"/v1/ducks/donald", bytes.NewReader(payload))
-		require.NoError(t, err)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
-	}()
 }
 
 // Make sure that without resource/collection methods, this isn't accessible to the outside world.
@@ -236,15 +222,19 @@ func TestDuckAPI_EmptySchema_GetFails(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/v1/ducks")
-	require.NoError(t, err)
-	defer resp.Body.Close()
-	require.Equal(t, http.StatusForbidden, resp.StatusCode)
+	t.Run("can list ducks", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/v1/ducks")
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
 
-	resp, err = http.Get(ts.URL + "/v1/ducks/donald")
-	require.NoError(t, err)
-	defer resp.Body.Close()
-	require.Equal(t, http.StatusForbidden, resp.StatusCode)
+	t.Run("can get ducks by ID", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/v1/ducks/donald")
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
 }
 
 func TestDuckAPI_AllMethodsSupported(t *testing.T) {
@@ -264,7 +254,7 @@ func TestDuckAPI_AllMethodsSupported(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	func() {
+	t.Run("can list ducks", func(t *testing.T) {
 		resp, err := http.Get(ts.URL + "/v1/ducks")
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -278,49 +268,56 @@ func TestDuckAPI_AllMethodsSupported(t *testing.T) {
 		items, ok := data.([]interface{})
 		require.True(t, ok)
 		require.Len(t, items, 2)
-	}()
+	})
 
-	func() {
+	t.Run("can get ducks by ID", func(t *testing.T) {
 		resp, err := http.Get(ts.URL + "/v1/ducks/donald")
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-	}()
+	})
 
-	func() {
+	t.Run("can't get a duck we don't have", func(t *testing.T) {
 		resp, err := http.Get(ts.URL + "/v1/ducks/dynasty")
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	}()
+	})
 
-	// Verify post works
-	func() {
+	t.Run("can create ducks", func(t *testing.T) {
 		payload := []byte(`{"id":"daffy", "name":"orange"}`)
 		resp, err := http.Post(ts.URL+"/v1/ducks", "application/json", bytes.NewReader(payload))
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
-	}()
+	})
 
-	// Verify delete works
-	func() {
+	t.Run("can delete an existing duck", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodDelete, ts.URL+"/v1/ducks/donald", nil)
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-	}()
-	func() {
+	})
+
+	t.Run("can't delete a non-existing duck", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodDelete, ts.URL+"/v1/ducks/wallace", nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("can't get a deleted duck", func(t *testing.T) {
 		resp, err := http.Get(ts.URL + "/v1/ducks/donald")
 		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	}()
+	})
 
-	// Verify put works
-	func() {
+	t.Run("can modify ducks", func(t *testing.T) {
 		payload := []byte(`{"name":"teal"}`)
 		req, err := http.NewRequest(http.MethodPut, ts.URL+"/v1/ducks/howard", bytes.NewReader(payload))
 		require.NoError(t, err)
@@ -330,5 +327,5 @@ func TestDuckAPI_AllMethodsSupported(t *testing.T) {
 
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-	}()
+	})
 }
