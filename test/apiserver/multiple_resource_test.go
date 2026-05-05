@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"sync"
 	"testing"
 
 	"github.com/rancher/apiserver/pkg/server"
@@ -17,7 +18,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// --- Dog type and store ---
+type PetStore struct {
+	empty.Store
+	mu       sync.Mutex
+	watchers []chan types.APIEvent
+}
 
 type Dog struct {
 	ID   string `json:"id,omitempty"`
@@ -25,8 +30,51 @@ type Dog struct {
 }
 
 type DogStore struct {
-	empty.Store
-	dogs []Dog
+	PetStore
+	dogs     []Dog
+}
+
+type Cat struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name"`
+}
+
+type CatStore struct {
+	PetStore
+	cats     []Cat
+}
+
+// Common pet store operations
+
+func (s *PetStore) broadcast(event types.APIEvent) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, ch := range s.watchers {
+		select {
+		case ch <- event:
+		default:
+		}
+	}
+}
+
+func (s *PetStore) Watch(apiOp *types.APIRequest, _ *types.APISchema, _ types.WatchRequest) (chan types.APIEvent, error) {
+	ch := make(chan types.APIEvent, 100)
+	s.mu.Lock()
+	s.watchers = append(s.watchers, ch)
+	s.mu.Unlock()
+	go func() {
+		<-apiOp.Request.Context().Done()
+		s.mu.Lock()
+		for i, w := range s.watchers {
+			if w == ch {
+				s.watchers = slices.Delete(s.watchers, i, i+1)
+				break
+			}
+		}
+		s.mu.Unlock()
+		close(ch)
+	}()
+	return ch, nil
 }
 
 var basicDogs = []Dog{
@@ -45,10 +93,50 @@ func (s *DogStore) getDogIndex(id string) int {
 	return slices.IndexFunc(s.dogs, func(d Dog) bool { return d.ID == id })
 }
 
+func (s *DogStore) Create(_ *types.APIRequest, schema *types.APISchema, data types.APIObject) (types.APIObject, error) {
+	newDog := Dog{ID: data.ID, Name: data.Object.(map[string]any)["name"].(string)}
+	s.mu.Lock()
+	s.dogs = append(s.dogs, newDog)
+	s.mu.Unlock()
+	result := types.APIObject{Type: schema.ID, ID: newDog.ID, Object: Dog{Name: newDog.Name}}
+	s.broadcast(types.APIEvent{Name: types.CreateAPIEvent, Object: result})
+	return result, nil
+}
+
+func (s *DogStore) Update(_ *types.APIRequest, schema *types.APISchema, data types.APIObject, id string) (types.APIObject, error) {
+	s.mu.Lock()
+	i := s.getDogIndex(id)
+	if i == -1 {
+		s.mu.Unlock()
+		return types.APIObject{}, validation.NotFound
+	}
+	newName := data.Object.(map[string]any)["name"].(string)
+	s.dogs[i].Name = newName
+	s.mu.Unlock()
+	result := types.APIObject{Type: schema.ID, ID: id, Object: Dog{Name: newName}}
+	s.broadcast(types.APIEvent{Name: types.ChangeAPIEvent, Object: result})
+	return result, nil
+}
+
+func (s *DogStore) Delete(_ *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
+	s.mu.Lock()
+	i := s.getDogIndex(id)
+	if i == -1 {
+		s.mu.Unlock()
+		return types.APIObject{}, validation.NotFound
+	}
+	dog := s.dogs[i]
+	s.dogs = slices.Delete(s.dogs, i, i+1)
+	s.mu.Unlock()
+	result := types.APIObject{Type: schema.ID, ID: id, Object: Dog{Name: dog.Name}}
+	s.broadcast(types.APIEvent{Name: types.RemoveAPIEvent, Object: result})
+	return result, nil
+}
+
 func (s *DogStore) List(apiOp *types.APIRequest, schema *types.APISchema) (types.APIObjectList, error) {
-	var objects []types.APIObject
-	for _, dog := range s.dogs {
-		objects = append(objects, types.APIObject{Type: schema.ID, ID: dog.ID, Object: Dog{Name: dog.Name}})
+	objects := make([]types.APIObject, len(s.dogs))
+	for i, dog := range s.dogs {
+		objects[i] = types.APIObject{Type: schema.ID, ID: dog.ID, Object: Dog{Name: dog.Name}}
 	}
 	return types.APIObjectList{Objects: objects}, nil
 }
@@ -59,18 +147,6 @@ func (s *DogStore) ByID(_ *types.APIRequest, schema *types.APISchema, id string)
 		return types.APIObject{}, validation.NotFound
 	}
 	return types.APIObject{Type: schema.ID, ID: id, Object: Dog{Name: s.dogs[i].Name}}, nil
-}
-
-// --- Cat type and store ---
-
-type Cat struct {
-	ID   string `json:"id,omitempty"`
-	Name string `json:"name"`
-}
-
-type CatStore struct {
-	empty.Store
-	cats []Cat
 }
 
 var basicCats = []Cat{
@@ -90,10 +166,50 @@ func (s *CatStore) getCatIndex(id string) int {
 	return slices.IndexFunc(s.cats, func(c Cat) bool { return c.ID == id })
 }
 
+func (s *CatStore) Create(_ *types.APIRequest, schema *types.APISchema, data types.APIObject) (types.APIObject, error) {
+	newCat := Cat{ID: data.ID, Name: data.Object.(map[string]any)["name"].(string)}
+	s.mu.Lock()
+	s.cats = append(s.cats, newCat)
+	s.mu.Unlock()
+	result := types.APIObject{Type: schema.ID, ID: newCat.ID, Object: Cat{Name: newCat.Name}}
+	s.broadcast(types.APIEvent{Name: types.CreateAPIEvent, Object: result})
+	return result, nil
+}
+
+func (s *CatStore) Update(_ *types.APIRequest, schema *types.APISchema, data types.APIObject, id string) (types.APIObject, error) {
+	s.mu.Lock()
+	i := s.getCatIndex(id)
+	if i == -1 {
+		s.mu.Unlock()
+		return types.APIObject{}, validation.NotFound
+	}
+	newName := data.Object.(map[string]any)["name"].(string)
+	s.cats[i].Name = newName
+	s.mu.Unlock()
+	result := types.APIObject{Type: schema.ID, ID: id, Object: Cat{Name: newName}}
+	s.broadcast(types.APIEvent{Name: types.ChangeAPIEvent, Object: result})
+	return result, nil
+}
+
+func (s *CatStore) Delete(_ *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
+	s.mu.Lock()
+	i := s.getCatIndex(id)
+	if i == -1 {
+		s.mu.Unlock()
+		return types.APIObject{}, validation.NotFound
+	}
+	cat := s.cats[i]
+	s.cats = slices.Delete(s.cats, i, i+1)
+	s.mu.Unlock()
+	result := types.APIObject{Type: schema.ID, ID: id, Object: Cat{Name: cat.Name}}
+	s.broadcast(types.APIEvent{Name: types.RemoveAPIEvent, Object: result})
+	return result, nil
+}
+
 func (s *CatStore) List(apiOp *types.APIRequest, schema *types.APISchema) (types.APIObjectList, error) {
-	var objects []types.APIObject
-	for _, cat := range s.cats {
-		objects = append(objects, types.APIObject{Type: schema.ID, ID: cat.ID, Object: Cat{Name: cat.Name}})
+	objects := make([]types.APIObject, len(s.cats))
+	for i, cat := range s.cats {
+		objects[i] = types.APIObject{Type: schema.ID, ID: cat.ID, Object: Cat{Name: cat.Name}}
 	}
 	return types.APIObjectList{Objects: objects}, nil
 }
