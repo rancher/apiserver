@@ -31,7 +31,7 @@ type Dog struct {
 
 type DogStore struct {
 	PetStore
-	dogs []Dog
+	dogs     []Dog
 }
 
 type Cat struct {
