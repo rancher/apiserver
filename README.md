@@ -300,3 +300,12 @@ func (a *accessControl) CanList(apiOp *types.APIRequest, schema *types.APISchema
 }
 s.AccessControl = &accessControl{}
 ```
+
+# Releasing
+
+Releases are cut by triggering the [Cut release workflow](.github/workflows/cut-release.yaml)
+from the GitHub Actions tab. Select this release branch and provide the version
+(e.g. `v0.4.1`) as input. The workflow validates the version against `VERSION.md`
+on the default branch, creates the annotated tag, and dispatches the
+[On release workflow](.github/workflows/release.yaml) on the new tag, which creates
+the GitHub release.
