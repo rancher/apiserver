@@ -262,11 +262,14 @@ type APIObjectList struct {
 	Warnings []Warning
 }
 
-type SummaryEntry struct {
-	Property string         `json:"property,omitempty" yaml:"property,omitempty"`
-	Counts   map[string]int `json:"counts,omitempty" yaml:"counts,omitempty"`
+type SummaryWithBreakdown struct {
+	Total     int            `json:"total" yaml:"total"`
+	Namespace map[string]int `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 }
-
+type SummaryEntry struct {
+	Property string                          `json:"property,omitempty" yaml:"property,omitempty"`
+	Counts   map[string]SummaryWithBreakdown `json:"counts,omitempty" yaml:"counts,omitempty"`
+}
 type APISummary struct {
 	SummaryItems []SummaryEntry
 }
