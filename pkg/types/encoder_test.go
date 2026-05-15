@@ -44,18 +44,24 @@ func TestJSONLinesEncoder(t *testing.T) {
 			args: args{&types.GenericCollection{Collection: collection, Data: data, Summary: []types.SummaryEntry{
 				types.SummaryEntry{
 					Property: "field01",
-					Counts:   map[string]int{"walrus": 3, "cat": 4},
+					Counts: map[string]types.SummaryWithBreakdown{
+						"walrus": {Total: 3},
+						"cat":    {Total: 4},
+					},
 				},
 				types.SummaryEntry{
 					Property: "field02",
-					Counts:   map[string]int{"walrus": 5, "cat": 2},
+					Counts: map[string]types.SummaryWithBreakdown{
+						"walrus": {Total: 5},
+						"cat":    {Total: 2},
+					},
 				}}}},
 			wantWriter: `{"links":{},"actions":{},"resourceType":"Test"}
 {"links":null}
 {"links":null}
 {"links":null}
-{"property":"field01","counts":{"cat":4,"walrus":3}}
-{"property":"field02","counts":{"cat":2,"walrus":5}}
+{"property":"field01","counts":{"cat":{"total":4},"walrus":{"total":3}}}
+{"property":"field02","counts":{"cat":{"total":2},"walrus":{"total":5}}}
 
 `,
 		},
