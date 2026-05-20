@@ -341,3 +341,116 @@ func (mr *MockURLBuilderMockRecorder) ResourceLink(arg0, arg1 interface{}) *gomo
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourceLink", reflect.TypeOf((*MockURLBuilder)(nil).ResourceLink), arg0, arg1)
 }
+
+// MockStore is a mock of Store interface.
+type MockStore struct {
+	ctrl     *gomock.Controller
+	recorder *MockStoreMockRecorder
+}
+
+// MockStoreMockRecorder is the mock recorder for MockStore.
+type MockStoreMockRecorder struct {
+	mock *MockStore
+}
+
+// NewMockStore creates a new mock instance.
+func NewMockStore(ctrl *gomock.Controller) *MockStore {
+	mock := &MockStore{ctrl: ctrl}
+	mock.recorder = &MockStoreMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockStore) EXPECT() *MockStoreMockRecorder {
+	return m.recorder
+}
+
+// ByID mocks base method.
+func (m *MockStore) ByID(apiOp *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ByID", apiOp, schema, id)
+	ret0, _ := ret[0].(types.APIObject)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ByID indicates an expected call of ByID.
+func (mr *MockStoreMockRecorder) ByID(apiOp, schema, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByID", reflect.TypeOf((*MockStore)(nil).ByID), apiOp, schema, id)
+}
+
+// Create mocks base method.
+func (m *MockStore) Create(apiOp *types.APIRequest, schema *types.APISchema, data types.APIObject) (types.APIObject, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", apiOp, schema, data)
+	ret0, _ := ret[0].(types.APIObject)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockStoreMockRecorder) Create(apiOp, schema, data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockStore)(nil).Create), apiOp, schema, data)
+}
+
+// Delete mocks base method.
+func (m *MockStore) Delete(apiOp *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", apiOp, schema, id)
+	ret0, _ := ret[0].(types.APIObject)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockStoreMockRecorder) Delete(apiOp, schema, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStore)(nil).Delete), apiOp, schema, id)
+}
+
+// List mocks base method.
+func (m *MockStore) List(apiOp *types.APIRequest, schema *types.APISchema) (types.APIObjectList, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", apiOp, schema)
+	ret0, _ := ret[0].(types.APIObjectList)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// List indicates an expected call of List.
+func (mr *MockStoreMockRecorder) List(apiOp, schema interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockStore)(nil).List), apiOp, schema)
+}
+
+// Update mocks base method.
+func (m *MockStore) Update(apiOp *types.APIRequest, schema *types.APISchema, data types.APIObject, id string) (types.APIObject, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", apiOp, schema, data, id)
+	ret0, _ := ret[0].(types.APIObject)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockStoreMockRecorder) Update(apiOp, schema, data, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockStore)(nil).Update), apiOp, schema, data, id)
+}
+
+// Watch mocks base method.
+func (m *MockStore) Watch(apiOp *types.APIRequest, schema *types.APISchema, w types.WatchRequest) (chan types.APIEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Watch", apiOp, schema, w)
+	ret0, _ := ret[0].(chan types.APIEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Watch indicates an expected call of Watch.
+func (mr *MockStoreMockRecorder) Watch(apiOp, schema, w interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Watch", reflect.TypeOf((*MockStore)(nil).Watch), apiOp, schema, w)
+}
