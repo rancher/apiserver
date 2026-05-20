@@ -45,20 +45,6 @@ func NewDuckStore(initialDucks []Duck) *DuckStore {
 	return &DuckStore{ducks: initialDucks}
 }
 
-func (s *DuckStore) List(apiOp *types.APIRequest, schema *types.APISchema) (types.APIObjectList, error) {
-	var returnedObjects []types.APIObject
-	for _, duck := range s.ducks {
-		returnedObjects = append(returnedObjects, types.APIObject{
-			Type: schema.ID,
-			ID:   duck.ID,
-			Object: Duck{
-				Name: duck.Name,
-			},
-		})
-	}
-	return types.APIObjectList{Objects: returnedObjects}, nil
-}
-
 func (s *DuckStore) getDuckIndex(id string) int {
 	return slices.IndexFunc(s.ducks, func(d Duck) bool {
 		return d.ID == id
@@ -80,6 +66,11 @@ func (s *DuckStore) ByID(_ *types.APIRequest, schema *types.APISchema, id string
 	}, nil
 }
 
+func (s *DuckStore) Create(apiOp *types.APIRequest, schema *types.APISchema, data types.APIObject) (types.APIObject, error) {
+	s.ducks = append(s.ducks, Duck{ID: data.ID, Name: data.Object.(map[string]any)["name"].(string)})
+	return data, nil
+}
+
 func (s *DuckStore) Delete(apiOp *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
 	index := s.getDuckIndex(id)
 	if index == -1 {
@@ -96,9 +87,18 @@ func (s *DuckStore) Delete(apiOp *types.APIRequest, schema *types.APISchema, id 
 	}, nil
 }
 
-func (s *DuckStore) Create(apiOp *types.APIRequest, schema *types.APISchema, data types.APIObject) (types.APIObject, error) {
-	s.ducks = append(s.ducks, Duck{ID: data.ID, Name: data.Object.(map[string]any)["name"].(string)})
-	return data, nil
+func (s *DuckStore) List(apiOp *types.APIRequest, schema *types.APISchema) (types.APIObjectList, error) {
+	var returnedObjects []types.APIObject
+	for _, duck := range s.ducks {
+		returnedObjects = append(returnedObjects, types.APIObject{
+			Type: schema.ID,
+			ID:   duck.ID,
+			Object: Duck{
+				Name: duck.Name,
+			},
+		})
+	}
+	return types.APIObjectList{Objects: returnedObjects}, nil
 }
 
 func (s *DuckStore) Update(apiOp *types.APIRequest, schema *types.APISchema, data types.APIObject, id string) (types.APIObject, error) {
