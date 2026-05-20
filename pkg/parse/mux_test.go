@@ -1,0 +1,36 @@
+package parse
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestStandardURLParserUsesPathValuesForActionAndLink(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/v1/resource/objectName?action=queryAction&link=queryLink", nil)
+	req.SetPathValue("type", "resource")
+	req.SetPathValue("name", "objectName")
+	req.SetPathValue("action", "pathAction")
+	req.SetPathValue("link", "pathLink")
+
+	parsed, err := StandardURLParser(httptest.NewRecorder(), req, nil)
+	require.NoError(t, err)
+	require.Equal(t, "pathAction", parsed.Action)
+	require.Equal(t, "pathLink", parsed.Link)
+	require.Equal(t, "resource", parsed.Type)
+	require.Equal(t, "objectName", parsed.Name)
+}
+
+func TestStandardURLParserFallsBackToQueryWhenPathValuesMissing(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/v1/resource/objectName?action=queryAction&link=queryLink", nil)
+	req.SetPathValue("type", "resource")
+	req.SetPathValue("name", "objectName")
+
+	parsed, err := StandardURLParser(httptest.NewRecorder(), req, nil)
+	require.NoError(t, err)
+	require.Equal(t, "queryAction", parsed.Action)
+	require.Equal(t, "queryLink", parsed.Link)
+}
+
