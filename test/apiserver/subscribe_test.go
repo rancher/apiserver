@@ -21,7 +21,7 @@ import (
 
 var wsUpgrader = websocket.Upgrader{} //nolint:exhaustruct
 
-const timeoutInSeconds = 3 * time.Second
+const timeoutInSeconds = 3 * time.Second // nolint: staticcheck
 
 // newSubscribeRouter builds a ServeMux that routes collection and resource
 // endpoints to s, plus a /v1/subscribe WebSocket endpoint backed directly by
