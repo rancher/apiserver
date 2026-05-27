@@ -31,7 +31,7 @@ type Dog struct {
 
 type DogStore struct {
 	PetStore
-	dogs     []Dog
+	dogs []Dog
 }
 
 type Cat struct {
@@ -41,7 +41,7 @@ type Cat struct {
 
 type CatStore struct {
 	PetStore
-	cats     []Cat
+	cats []Cat
 }
 
 // Common pet store operations
@@ -134,6 +134,8 @@ func (s *DogStore) Delete(_ *types.APIRequest, schema *types.APISchema, id strin
 }
 
 func (s *DogStore) List(apiOp *types.APIRequest, schema *types.APISchema) (types.APIObjectList, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	objects := make([]types.APIObject, len(s.dogs))
 	for i, dog := range s.dogs {
 		objects[i] = types.APIObject{Type: schema.ID, ID: dog.ID, Object: Dog{Name: dog.Name}}
@@ -142,6 +144,8 @@ func (s *DogStore) List(apiOp *types.APIRequest, schema *types.APISchema) (types
 }
 
 func (s *DogStore) ByID(_ *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	i := s.getDogIndex(id)
 	if i == -1 {
 		return types.APIObject{}, validation.NotFound
@@ -167,6 +171,8 @@ func (s *CatStore) getCatIndex(id string) int {
 }
 
 func (s *CatStore) ByID(_ *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	i := s.getCatIndex(id)
 	if i == -1 {
 		return types.APIObject{}, validation.NotFound
@@ -200,6 +206,8 @@ func (s *CatStore) Delete(_ *types.APIRequest, schema *types.APISchema, id strin
 }
 
 func (s *CatStore) List(apiOp *types.APIRequest, schema *types.APISchema) (types.APIObjectList, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	objects := make([]types.APIObject, len(s.cats))
 	for i, cat := range s.cats {
 		objects[i] = types.APIObject{Type: schema.ID, ID: cat.ID, Object: Cat{Name: cat.Name}}

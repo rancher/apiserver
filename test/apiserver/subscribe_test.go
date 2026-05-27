@@ -101,7 +101,8 @@ func TestSubscribe_DogAndCatEvents(t *testing.T) {
 	defer conn.Close()
 
 	// Subscribe to dog events.
-	subMsg, _ := json.Marshal(map[string]string{"resourceType": "dog"})
+	subMsg, err := json.Marshal(map[string]string{"resourceType": "dog"})
+	require.NoError(t, err)
 	require.NoError(t, conn.WriteMessage(websocket.TextMessage, subMsg))
 
 	event := readWSEvent(t, conn, timeoutInSeconds)
@@ -109,7 +110,8 @@ func TestSubscribe_DogAndCatEvents(t *testing.T) {
 	assert.Equal(t, "dog", event["resourceType"])
 
 	// Subscribe to cat events.
-	subMsg, _ = json.Marshal(map[string]string{"resourceType": "cat"})
+	subMsg, err = json.Marshal(map[string]string{"resourceType": "cat"})
+	require.NoError(t, err)
 	require.NoError(t, conn.WriteMessage(websocket.TextMessage, subMsg))
 
 	event = readWSEvent(t, conn, timeoutInSeconds)
@@ -120,7 +122,7 @@ func TestSubscribe_DogAndCatEvents(t *testing.T) {
 		resp, err := http.Post(ts.URL+"/v1/dogs", "application/json",
 			bytes.NewBufferString(`{"id":"mcruff","name":"fleethound"}`))
 		require.NoError(t, err)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
 
 		event = readWSEvent(t, conn, timeoutInSeconds)
@@ -135,7 +137,7 @@ func TestSubscribe_DogAndCatEvents(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		event = readWSEvent(t, conn, timeoutInSeconds)
@@ -148,7 +150,7 @@ func TestSubscribe_DogAndCatEvents(t *testing.T) {
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		event = readWSEvent(t, conn, timeoutInSeconds)
@@ -160,7 +162,7 @@ func TestSubscribe_DogAndCatEvents(t *testing.T) {
 		resp, err := http.Post(ts.URL+"/v1/cats", "application/json",
 			bytes.NewBufferString(`{"id":"shnopsker","name":"nutbag"}`))
 		require.NoError(t, err)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
 
 		event = readWSEvent(t, conn, timeoutInSeconds)
@@ -173,7 +175,7 @@ func TestSubscribe_DogAndCatEvents(t *testing.T) {
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		event = readWSEvent(t, conn, timeoutInSeconds)
@@ -188,7 +190,7 @@ func TestSubscribe_DogAndCatEvents(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		event = readWSEvent(t, conn, timeoutInSeconds)
