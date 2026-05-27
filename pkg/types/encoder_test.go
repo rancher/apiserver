@@ -44,18 +44,24 @@ func TestJSONLinesEncoder(t *testing.T) {
 			args: args{&types.GenericCollection{Collection: collection, Data: data, Summary: []types.SummaryEntry{
 				types.SummaryEntry{
 					Property: "field01",
-					Counts:   map[string]int{"walrus": 3, "cat": 4},
+					Counts: map[string]types.SummaryWithBreakdown{
+						"walrus": {Total: 3, Namespace: map[string]int{"zoo": 1, "park": 2}},
+						"cat":    {Total: 4, Namespace: map[string]int{"house": 3, "nursing home": 1}},
+					},
 				},
 				types.SummaryEntry{
 					Property: "field02",
-					Counts:   map[string]int{"walrus": 5, "cat": 2},
+					Counts: map[string]types.SummaryWithBreakdown{
+						"walrus": {Total: 5, Namespace: map[string]int{"zoo": 3, "park": 2}},
+						"cat":    {Total: 2, Namespace: map[string]int{"house": 1, "nursing home": 1}},
+					},
 				}}}},
 			wantWriter: `{"links":{},"actions":{},"resourceType":"Test"}
 {"links":null}
 {"links":null}
 {"links":null}
-{"property":"field01","counts":{"cat":4,"walrus":3}}
-{"property":"field02","counts":{"cat":2,"walrus":5}}
+{"property":"field01","counts":{"cat":{"total":4,"namespace":{"house":3,"nursing home":1}},"walrus":{"total":3,"namespace":{"park":2,"zoo":1}}}}
+{"property":"field02","counts":{"cat":{"total":2,"namespace":{"house":1,"nursing home":1}},"walrus":{"total":5,"namespace":{"park":2,"zoo":3}}}}
 
 `,
 		},
