@@ -89,3 +89,40 @@ func TestJSONLinesEncoder(t *testing.T) {
 		})
 	}
 }
+
+func TestYAMLEncoder(t *testing.T) {
+	tests := []struct {
+		name    string
+		v       interface{}
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "simple object",
+			v:    map[string]string{"hello": "world"},
+			want: "hello: world\n",
+		},
+		{
+			name: "nested object",
+			v:    map[string]interface{}{"meta": map[string]string{"name": "foo"}},
+			want: "meta:\n  name: foo\n",
+		},
+		{
+			name:    "unmarshalable type",
+			v:       func() {},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			writer := &bytes.Buffer{}
+			err := types.YAMLEncoder(writer, tt.v)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("YAMLEncoder() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if gotWriter := writer.String(); !tt.wantErr && gotWriter != tt.want {
+				t.Errorf("YAMLEncoder() gotWriter = %q, want %q", gotWriter, tt.want)
+			}
+		})
+	}
+}
