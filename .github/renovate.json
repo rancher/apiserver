@@ -8,10 +8,7 @@
     "release/v0.8",
     "release/v0.7",
     "release/v0.6",
-    "release/v0.5",
-    "release/v0.4",
-    "release/v0.3",
-    "release/v0.2"
+    "release/v0.5"
   ],
   "prHourlyLimit": 2,
   "enabledManagers": [
@@ -21,10 +18,32 @@
   ],
   "packageRules": [
     {
+      "matchBaseBranches": ["main"],
+      "extends": ["github>rancher/renovate-config:rancher-main#main"]
+    },
+    {
+      "matchBaseBranches": ["release/v0.9"],
+      "extends": ["github>rancher/renovate-config:rancher-2.15#main"]
+    },
+    {
+      "matchBaseBranches": ["release/v0.8"],
+      "extends": ["github>rancher/renovate-config:rancher-2.14#main"]
+    },
+    {
+      "matchBaseBranches": ["release/v0.7"],
+      "extends": ["github>rancher/renovate-config:rancher-2.13#main"]
+    },
+    {
+      "matchBaseBranches": ["release/v0.6"],
+      "extends": ["github>rancher/renovate-config:rancher-2.12#main"]
+    },
+    {
+      "matchBaseBranches": ["release/v0.5"],
+      "extends": ["github>rancher/renovate-config:rancher-2.11#main"]
+    },
+    {
       "enabled": false,
       "matchPackageNames": [
-        "/k8s.io/*/",
-        "/sigs.k8s.io/*/",
         "/go.opentelemetry.io/*/",
         "/github.com/prometheus/*/",
         "/github.com/rancher/wrangler/*/"
@@ -70,13 +89,6 @@
       ],
       "groupName": "Go dev tools",
       "separateMajorMinor": false
-    },
-    {
-      "description": "Group golang.org/x/* packages into a single PR per branch",
-      "matchPackageNames": [
-        "/^golang\\.org\\/x\\//"
-      ],
-      "groupName": "golang.org/x packages"
     }
   ]
 }
