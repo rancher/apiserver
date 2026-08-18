@@ -2,7 +2,7 @@ module github.com/rancher/apiserver
 
 go 1.26.0
 
-toolchain go1.26.5
+toolchain go1.26.6
 
 require (
 	github.com/golang/mock v1.6.0
