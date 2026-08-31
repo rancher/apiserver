@@ -4,15 +4,13 @@ go 1.26.0
 
 toolchain go1.26.6
 
-replace github.com/rancher/wrangler/v3 => github.com/Abhishek-Valaboju/wrangler/v3 v3.5.1-rc.1.0.20260828064927-bed3da9cc545
-
 require (
-	github.com/golang/mock v1.6.0
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/prometheus/client_golang v1.24.0
-	github.com/rancher/wrangler/v3 v3.7.0
+	github.com/rancher/wrangler/v3 v3.8.0-rc.1
 	github.com/sirupsen/logrus v1.10.1
 	github.com/stretchr/testify v1.12.1
+	go.uber.org/mock v0.6.0
 	k8s.io/apimachinery v0.37.0
 	k8s.io/apiserver v0.37.0
 	sigs.k8s.io/yaml v1.6.0

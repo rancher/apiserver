@@ -3,16 +3,17 @@ package handlers
 import (
 	"bytes"
 	"errors"
-	"github.com/rancher/apiserver/pkg/apierror"
-	"github.com/rancher/wrangler/v3/pkg/schemas/validation"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"github.com/rancher/apiserver/pkg/apierror"
+	"github.com/rancher/wrangler/v3/pkg/schemas/validation"
+
 	"github.com/rancher/apiserver/pkg/fakes"
 	"github.com/rancher/apiserver/pkg/types"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func newAPIRequest(ac types.AccessControl, store types.Store, body string) *types.APIRequest {

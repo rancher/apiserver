@@ -7,12 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/rancher/apiserver/pkg/apierror"
 	"github.com/rancher/apiserver/pkg/fakes"
 	"github.com/rancher/apiserver/pkg/types"
 	"github.com/rancher/wrangler/v3/pkg/schemas/validation"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func newUpdateAPIRequest(method, path, body, name string, ac types.AccessControl, store types.Store) *types.APIRequest {
