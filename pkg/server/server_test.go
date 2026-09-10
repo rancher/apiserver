@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/rancher/apiserver/pkg/apierror"
 	"github.com/rancher/apiserver/pkg/builtin"
 	"github.com/rancher/apiserver/pkg/fakes"
@@ -21,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 type ServerSuite struct {

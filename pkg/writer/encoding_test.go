@@ -1,9 +1,10 @@
 package writer
 
 import (
-	"github.com/golang/mock/gomock"
 	"net/http"
 	"testing"
+
+	"go.uber.org/mock/gomock"
 
 	"github.com/rancher/apiserver/pkg/fakes"
 	"github.com/rancher/apiserver/pkg/types"
