@@ -1,6 +1,6 @@
 module github.com/rancher/apiserver
 
-go 1.24.0
+go 1.26.0
 
 replace (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0
